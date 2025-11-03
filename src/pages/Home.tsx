@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import Hero from '../components/Hero'
-import InstagramFeed from '../components/InstagramFeed'
 import api from '../services/api'
 
 export default function Home() {
@@ -439,9 +438,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Instagram Feed Section */}
-      <InstagramFeed />
 
       {/* Contato Section */}
       <section id="contato" className="py-24 pt-32 relative overflow-hidden">

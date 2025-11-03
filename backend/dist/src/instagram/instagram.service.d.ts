@@ -1,4 +1,4 @@
-interface InstagramMedia {
+export interface InstagramMedia {
     id: string;
     caption?: string;
     media_type: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
@@ -16,4 +16,3 @@ export declare class InstagramService {
     refreshAccessToken(longLivedToken: string): Promise<any>;
     private getMockPosts;
 }
-export {};
