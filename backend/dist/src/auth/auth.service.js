@@ -79,6 +79,34 @@ let AuthService = class AuthService {
             },
         };
     }
+    async register(email, password, nome) {
+        console.log('📝 Tentativa de registro:', email);
+        const existingUser = await this.prisma.user.findUnique({
+            where: { email },
+        });
+        if (existingUser) {
+            throw new common_1.UnauthorizedException('Email já cadastrado');
+        }
+        const user = await this.prisma.user.create({
+            data: {
+                email,
+                password,
+                nome,
+                role: 'user',
+            },
+        });
+        console.log('✅ Usuário registrado com sucesso');
+        const token = crypto.randomBytes(32).toString('hex');
+        return {
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                nome: user.nome,
+                role: user.role,
+            },
+        };
+    }
     async validateToken(token) {
         return { valid: true };
     }

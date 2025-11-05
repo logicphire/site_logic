@@ -6,6 +6,7 @@ export declare class ProjectsController {
     constructor(projectsService: ProjectsService);
     create(createProjectDto: CreateProjectDto): Promise<{
         id: number;
+        ativo: boolean;
         createdAt: Date;
         updatedAt: Date;
         link: string | null;
@@ -18,11 +19,11 @@ export declare class ProjectsController {
         tecnologias: string[];
         tipoLink: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
     }>;
     findAll(categoria?: string): Promise<{
         id: number;
+        ativo: boolean;
         createdAt: Date;
         updatedAt: Date;
         link: string | null;
@@ -35,11 +36,11 @@ export declare class ProjectsController {
         tecnologias: string[];
         tipoLink: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
     }[]>;
     findFeatured(): Promise<{
         id: number;
+        ativo: boolean;
         createdAt: Date;
         updatedAt: Date;
         link: string | null;
@@ -52,11 +53,11 @@ export declare class ProjectsController {
         tecnologias: string[];
         tipoLink: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
     } | null>;
     findOne(id: number): Promise<{
         id: number;
+        ativo: boolean;
         createdAt: Date;
         updatedAt: Date;
         link: string | null;
@@ -69,11 +70,11 @@ export declare class ProjectsController {
         tecnologias: string[];
         tipoLink: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
     } | null>;
     update(id: number, updateProjectDto: UpdateProjectDto): Promise<{
         id: number;
+        ativo: boolean;
         createdAt: Date;
         updatedAt: Date;
         link: string | null;
@@ -86,11 +87,11 @@ export declare class ProjectsController {
         tecnologias: string[];
         tipoLink: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
     }>;
     remove(id: number): Promise<{
         id: number;
+        ativo: boolean;
         createdAt: Date;
         updatedAt: Date;
         link: string | null;
@@ -103,11 +104,11 @@ export declare class ProjectsController {
         tecnologias: string[];
         tipoLink: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
     }>;
     deactivate(id: number): Promise<{
         id: number;
+        ativo: boolean;
         createdAt: Date;
         updatedAt: Date;
         link: string | null;
@@ -120,7 +121,6 @@ export declare class ProjectsController {
         tecnologias: string[];
         tipoLink: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
     }>;
 }

@@ -4,13 +4,12 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 async function main() {
     const user = await prisma.user.upsert({
-        where: { email: 'admin@logicphire.com' },
+        where: { email: 'admin@site.com' },
         update: {},
         create: {
-            email: 'admin@logicphire.com',
+            email: 'admin@site.com',
             nome: 'Administrador',
             password: 'admin123',
-            firebaseUid: 'temp_admin_' + Date.now(),
             role: 'admin',
         },
     });

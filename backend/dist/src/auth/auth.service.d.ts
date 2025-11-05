@@ -11,6 +11,15 @@ export declare class AuthService {
             role: string;
         };
     }>;
+    register(email: string, password: string, nome: string): Promise<{
+        token: string;
+        user: {
+            id: number;
+            email: string;
+            nome: string;
+            role: string;
+        };
+    }>;
     validateToken(token: string): Promise<{
         valid: boolean;
     }>;

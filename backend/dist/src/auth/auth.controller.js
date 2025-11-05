@@ -12,7 +12,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthController = exports.LoginDto = void 0;
+exports.AuthController = exports.RegisterDto = exports.LoginDto = void 0;
 const common_1 = require("@nestjs/common");
 const class_validator_1 = require("class-validator");
 const auth_service_1 = require("./auth.service");
@@ -30,6 +30,25 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
+class RegisterDto {
+    email;
+    password;
+    nome;
+}
+exports.RegisterDto = RegisterDto;
+__decorate([
+    (0, class_validator_1.IsEmail)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "password", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "nome", void 0);
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -37,6 +56,9 @@ let AuthController = class AuthController {
     }
     async login(loginDto) {
         return this.authService.login(loginDto.email, loginDto.password);
+    }
+    async register(registerDto) {
+        return this.authService.register(registerDto.email, registerDto.password, registerDto.nome);
     }
     async validate(body) {
         return this.authService.validateToken(body.token);
@@ -51,6 +73,14 @@ __decorate([
     __metadata("design:paramtypes", [LoginDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)('register'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [RegisterDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "register", null);
 __decorate([
     (0, common_1.Post)('validate'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),

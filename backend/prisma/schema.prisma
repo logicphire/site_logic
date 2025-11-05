@@ -12,11 +12,11 @@ datasource db {
 
 model User {
   id           Int      @id @default(autoincrement())
-  firebaseUid  String   @unique @map("firebase_uid")
   email        String   @unique
   nome         String
-  password     String?  // Senha temporária para desenvolvimento
-  role         String   @default("admin")
+  password     String
+  role         String   @default("user")
+  ativo        Boolean  @default(true)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

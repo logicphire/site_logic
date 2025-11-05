@@ -46,6 +46,44 @@ export class AuthService {
     };
   }
 
+  async register(email: string, password: string, nome: string) {
+    console.log('📝 Tentativa de registro:', email);
+
+    // Verificar se usuário já existe
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new UnauthorizedException('Email já cadastrado');
+    }
+
+    // Criar novo usuário (em produção usar bcrypt para hash da senha)
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password, // Em produção: await bcrypt.hash(password, 10)
+        nome,
+        role: 'user',
+      },
+    });
+
+    console.log('✅ Usuário registrado com sucesso');
+
+    // Gerar token
+    const token = crypto.randomBytes(32).toString('hex');
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        nome: user.nome,
+        role: user.role,
+      },
+    };
+  }
+
   async validateToken(token: string) {
     // Por enquanto, aceita qualquer token
     // Em produção, validar o JWT

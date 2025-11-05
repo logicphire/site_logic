@@ -6,7 +6,6 @@ export declare class UsersController {
     constructor(usersService: UsersService);
     create(createUserDto: CreateUserDto): Promise<{
         id: number;
-        firebaseUid: string;
         email: string;
         nome: string;
         role: string;
@@ -14,7 +13,6 @@ export declare class UsersController {
     }>;
     findAll(): Promise<{
         id: number;
-        firebaseUid: string;
         email: string;
         nome: string;
         role: string;
@@ -22,7 +20,6 @@ export declare class UsersController {
     }[]>;
     findOne(id: string): Promise<{
         id: number;
-        firebaseUid: string;
         email: string;
         nome: string;
         role: string;
@@ -30,7 +27,6 @@ export declare class UsersController {
     }>;
     update(id: string, updateUserDto: UpdateUserDto): Promise<{
         id: number;
-        firebaseUid: string;
         email: string;
         nome: string;
         role: string;

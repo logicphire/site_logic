@@ -6,7 +6,6 @@ export declare class UsersService {
     constructor(prisma: PrismaService);
     create(createUserDto: CreateUserDto): Promise<{
         id: number;
-        firebaseUid: string;
         email: string;
         nome: string;
         role: string;
@@ -14,7 +13,6 @@ export declare class UsersService {
     }>;
     findAll(): Promise<{
         id: number;
-        firebaseUid: string;
         email: string;
         nome: string;
         role: string;
@@ -22,7 +20,6 @@ export declare class UsersService {
     }[]>;
     findOne(id: number): Promise<{
         id: number;
-        firebaseUid: string;
         email: string;
         nome: string;
         role: string;
@@ -30,7 +27,6 @@ export declare class UsersService {
     }>;
     update(id: number, updateUserDto: UpdateUserDto): Promise<{
         id: number;
-        firebaseUid: string;
         email: string;
         nome: string;
         role: string;

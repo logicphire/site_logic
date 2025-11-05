@@ -5,13 +5,12 @@ const prisma = new PrismaClient();
 async function main() {
   // Criar usuário admin de teste
   const user = await prisma.user.upsert({
-    where: { email: 'admin@logicphire.com' },
+    where: { email: 'admin@site.com' },
     update: {},
     create: {
-      email: 'admin@logicphire.com',
+      email: 'admin@site.com',
       nome: 'Administrador',
       password: 'admin123',
-      firebaseUid: 'temp_admin_' + Date.now(),
       role: 'admin',
     },
   });

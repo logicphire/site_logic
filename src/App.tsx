@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import Projetos from './pages/Projetos'
 import Orcamento from './pages/Orcamento'
 import Login from './pages/admin/Login'
+import Register from './pages/admin/Register'
 import Dashboard from './pages/admin/Dashboard'
 import AdminProjetos from './pages/admin/Projetos'
 import AdminOrcamentos from './pages/admin/Orcamentos'
@@ -50,6 +51,7 @@ export default function App() {
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<Login />} />
+          <Route path="/admin/register" element={<Register />} />
           <Route path="/admin/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
