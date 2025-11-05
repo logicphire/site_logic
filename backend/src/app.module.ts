@@ -8,6 +8,7 @@ import { OrcamentosModule } from './orcamentos/orcamentos.module';
 import { ContatosModule } from './contatos/contatos.module';
 import { UsersModule } from './users/users.module';
 import { InstagramModule } from './instagram/instagram.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { InstagramModule } from './instagram/instagram.module';
     ContatosModule,
     UsersModule,
     InstagramModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

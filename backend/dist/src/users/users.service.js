@@ -71,6 +71,7 @@ let UsersService = class UsersService {
                     firebaseUid,
                     email: createUserDto.email,
                     nome: createUserDto.nome,
+                    password: createUserDto.password,
                     role: createUserDto.role || 'admin',
                 },
             });
@@ -154,7 +155,14 @@ let UsersService = class UsersService {
         if (!user) {
             throw new common_1.NotFoundException('Usuário não encontrado');
         }
-        await admin.auth().deleteUser(user.firebaseUid);
+        if (!user.firebaseUid.startsWith('temp_')) {
+            try {
+                await admin.auth().deleteUser(user.firebaseUid);
+            }
+            catch (firebaseError) {
+                console.warn('Erro ao deletar usuário do Firebase:', firebaseError.message);
+            }
+        }
         await this.prisma.user.delete({
             where: { id },
         });

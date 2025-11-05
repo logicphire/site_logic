@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../config/firebase';
+import api from '../services/api';
+
+interface User {
+  id: number;
+  email: string;
+  nome: string;
+  role: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -16,30 +22,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const token = await user.getIdToken();
-        localStorage.setItem('authToken', token);
-        setUser(user);
-      } else {
+    // Verificar se há um usuário logado
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
+    
+    if (token && userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        console.error('Erro ao carregar dados do usuário:', error);
         localStorage.removeItem('authToken');
-        setUser(null);
+        localStorage.removeItem('userData');
       }
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    }
+    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const token = await userCredential.user.getIdToken();
-    localStorage.setItem('authToken', token);
+    console.log('🔐 Tentando fazer login com:', email);
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      console.log('✅ Resposta do servidor:', response.data);
+      const { token, user: userData } = response.data;
+      
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('userData', JSON.stringify(userData));
+      setUser(userData);
+      console.log('✅ Login bem-sucedido!');
+    } catch (error: any) {
+      console.error('❌ Erro no login:', error.response?.data || error.message);
+      throw error;
+    }
   };
 
   const logout = async () => {
-    await signOut(auth);
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    setUser(null);
   };
 
   return (

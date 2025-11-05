@@ -32,6 +32,7 @@ export class UsersService {
           firebaseUid,
           email: createUserDto.email,
           nome: createUserDto.nome,
+          password: createUserDto.password, // Salvar senha (em produção usar hash)
           role: createUserDto.role || 'admin',
         },
       });
@@ -129,8 +130,15 @@ export class UsersService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    // Deletar do Firebase
-    await admin.auth().deleteUser(user.firebaseUid);
+    // Tentar deletar do Firebase (se não for UID temporário)
+    if (!user.firebaseUid.startsWith('temp_')) {
+      try {
+        await admin.auth().deleteUser(user.firebaseUid);
+      } catch (firebaseError: any) {
+        console.warn('Erro ao deletar usuário do Firebase:', firebaseError.message);
+        // Continua mesmo se falhar no Firebase
+      }
+    }
 
     // Deletar do banco
     await this.prisma.user.delete({

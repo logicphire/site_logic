@@ -5,6 +5,10 @@ export declare class ProjectsController {
     private readonly projectsService;
     constructor(projectsService: ProjectsService);
     create(createProjectDto: CreateProjectDto): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -12,16 +16,16 @@ export declare class ProjectsController {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         destaque: boolean;
         ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     }>;
     findAll(categoria?: string): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -29,16 +33,16 @@ export declare class ProjectsController {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         destaque: boolean;
         ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     }[]>;
     findFeatured(): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -46,16 +50,16 @@ export declare class ProjectsController {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         destaque: boolean;
         ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     } | null>;
     findOne(id: number): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -63,16 +67,16 @@ export declare class ProjectsController {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         destaque: boolean;
         ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     } | null>;
     update(id: number, updateProjectDto: UpdateProjectDto): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -80,16 +84,16 @@ export declare class ProjectsController {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         destaque: boolean;
         ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     }>;
     remove(id: number): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -97,16 +101,16 @@ export declare class ProjectsController {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         destaque: boolean;
         ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     }>;
     deactivate(id: number): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -114,13 +118,9 @@ export declare class ProjectsController {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         destaque: boolean;
         ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     }>;
 }

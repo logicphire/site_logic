@@ -5,12 +5,12 @@ export declare class OrcamentosController {
     private readonly orcamentosService;
     constructor(orcamentosService: OrcamentosService);
     create(createOrcamentoDto: CreateOrcamentoDto): Promise<{
-        orcamento: string;
+        id: number;
+        email: string;
+        nome: string;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
-        nome: string;
-        email: string;
+        orcamento: string;
         telefone: string;
         empresa: string | null;
         tipoServico: string;
@@ -20,12 +20,12 @@ export declare class OrcamentosController {
         notasInternas: string | null;
     }>;
     findAll(status?: string): Promise<{
-        orcamento: string;
+        id: number;
+        email: string;
+        nome: string;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
-        nome: string;
-        email: string;
+        orcamento: string;
         telefone: string;
         empresa: string | null;
         tipoServico: string;
@@ -42,12 +42,12 @@ export declare class OrcamentosController {
         fechados: number;
     }>;
     findOne(id: number): Promise<{
-        orcamento: string;
+        id: number;
+        email: string;
+        nome: string;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
-        nome: string;
-        email: string;
+        orcamento: string;
         telefone: string;
         empresa: string | null;
         tipoServico: string;
@@ -57,12 +57,12 @@ export declare class OrcamentosController {
         notasInternas: string | null;
     } | null>;
     updateStatus(id: number, updateStatusDto: UpdateOrcamentoStatusDto): Promise<{
-        orcamento: string;
+        id: number;
+        email: string;
+        nome: string;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
-        nome: string;
-        email: string;
+        orcamento: string;
         telefone: string;
         empresa: string | null;
         tipoServico: string;
@@ -72,12 +72,12 @@ export declare class OrcamentosController {
         notasInternas: string | null;
     }>;
     remove(id: number): Promise<{
-        orcamento: string;
+        id: number;
+        email: string;
+        nome: string;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
-        nome: string;
-        email: string;
+        orcamento: string;
         telefone: string;
         empresa: string | null;
         tipoServico: string;

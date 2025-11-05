@@ -4,20 +4,20 @@ export declare class ContatosController {
     private readonly contatosService;
     constructor(contatosService: ContatosService);
     create(createContatoDto: CreateContatoDto): Promise<{
-        createdAt: Date;
         id: number;
-        nome: string;
         email: string;
+        nome: string;
+        createdAt: Date;
         telefone: string | null;
         status: string;
         respondido: boolean;
         mensagem: string;
     }>;
     findAll(status?: string): Promise<{
-        createdAt: Date;
         id: number;
-        nome: string;
         email: string;
+        nome: string;
+        createdAt: Date;
         telefone: string | null;
         status: string;
         respondido: boolean;
@@ -30,40 +30,40 @@ export declare class ContatosController {
         respondidos: number;
     }>;
     findOne(id: number): Promise<{
-        createdAt: Date;
         id: number;
-        nome: string;
         email: string;
+        nome: string;
+        createdAt: Date;
         telefone: string | null;
         status: string;
         respondido: boolean;
         mensagem: string;
     } | null>;
     markAsRead(id: number): Promise<{
-        createdAt: Date;
         id: number;
-        nome: string;
         email: string;
+        nome: string;
+        createdAt: Date;
         telefone: string | null;
         status: string;
         respondido: boolean;
         mensagem: string;
     }>;
     markAsResponded(id: number): Promise<{
-        createdAt: Date;
         id: number;
-        nome: string;
         email: string;
+        nome: string;
+        createdAt: Date;
         telefone: string | null;
         status: string;
         respondido: boolean;
         mensagem: string;
     }>;
     remove(id: number): Promise<{
-        createdAt: Date;
         id: number;
-        nome: string;
         email: string;
+        nome: string;
+        createdAt: Date;
         telefone: string | null;
         status: string;
         respondido: boolean;
