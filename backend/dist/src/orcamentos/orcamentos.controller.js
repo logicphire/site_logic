@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const orcamentos_service_1 = require("./orcamentos.service");
 const create_orcamento_dto_1 = require("./dto/create-orcamento.dto");
 const update_orcamento_status_dto_1 = require("./dto/update-orcamento-status.dto");
+const send_email_orcamento_dto_1 = require("./dto/send-email-orcamento.dto");
 let OrcamentosController = class OrcamentosController {
     orcamentosService;
     constructor(orcamentosService) {
@@ -36,6 +37,9 @@ let OrcamentosController = class OrcamentosController {
     }
     updateStatus(id, updateStatusDto) {
         return this.orcamentosService.updateStatus(id, updateStatusDto);
+    }
+    sendEmail(id, sendEmailDto) {
+        return this.orcamentosService.sendEmail(id, sendEmailDto);
     }
     remove(id) {
         return this.orcamentosService.remove(id);
@@ -77,6 +81,14 @@ __decorate([
     __metadata("design:paramtypes", [Number, update_orcamento_status_dto_1.UpdateOrcamentoStatusDto]),
     __metadata("design:returntype", void 0)
 ], OrcamentosController.prototype, "updateStatus", null);
+__decorate([
+    (0, common_1.Post)(':id/send-email'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, send_email_orcamento_dto_1.SendEmailOrcamentoDto]),
+    __metadata("design:returntype", void 0)
+], OrcamentosController.prototype, "sendEmail", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),

@@ -26,8 +26,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
-      window.location.href = '/admin/login';
+      // Só remove o token e redireciona se NÃO estiver na página de login/register
+      const currentPath = window.location.pathname;
+      const isAuthPage = currentPath.includes('/admin/login') || currentPath.includes('/admin/register');
+      
+      if (!isAuthPage) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        window.location.href = '/admin/login';
+      }
     }
     return Promise.reject(error);
   }

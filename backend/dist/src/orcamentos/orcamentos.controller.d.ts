@@ -1,6 +1,7 @@
 import { OrcamentosService } from './orcamentos.service';
 import { CreateOrcamentoDto } from './dto/create-orcamento.dto';
 import { UpdateOrcamentoStatusDto } from './dto/update-orcamento-status.dto';
+import { SendEmailOrcamentoDto } from './dto/send-email-orcamento.dto';
 export declare class OrcamentosController {
     private readonly orcamentosService;
     constructor(orcamentosService: OrcamentosService);
@@ -70,6 +71,18 @@ export declare class OrcamentosController {
         descricaoProjeto: string;
         status: string;
         notasInternas: string | null;
+    }>;
+    sendEmail(id: number, sendEmailDto: SendEmailOrcamentoDto): Promise<{
+        success: boolean;
+        message: string;
+        emailData: {
+            assunto: string;
+            mensagem: string;
+            valorOrcamento?: string;
+            prazoEntrega?: string;
+            to: string;
+            subject: string;
+        };
     }>;
     remove(id: number): Promise<{
         id: number;

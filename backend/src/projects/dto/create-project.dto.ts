@@ -37,6 +37,10 @@ export class CreateProjectDto {
   @IsOptional()
   tipoLink?: string;
 
+  @IsString()
+  @IsOptional()
+  repositorio?: string;
+
   @IsBoolean()
   @IsOptional()
   destaque?: boolean;

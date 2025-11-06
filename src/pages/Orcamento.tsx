@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import toast from 'react-hot-toast'
 import api from '../services/api'
 
 export default function Orcamento() {
@@ -31,12 +32,12 @@ export default function Orcamento() {
     // Validação simples para cada etapa
     if (step === 1) {
       if (!formData.nome || !formData.email || !formData.telefone) {
-        alert('Por favor, preencha todos os campos obrigatórios.');
+        toast.error('Por favor, preencha todos os campos obrigatórios.');
         return;
       }
     } else if (step === 2) {
       if (!formData.tipoServico || !formData.orcamento || !formData.prazo) {
-        alert('Por favor, preencha todos os campos obrigatórios.');
+        toast.error('Por favor, preencha todos os campos obrigatórios.');
         return;
       }
     }
@@ -56,12 +57,12 @@ export default function Orcamento() {
     
     // Validação final
     if (!formData.descricaoProjeto) {
-      alert('Por favor, descreva seu projeto.');
+      toast.error('Por favor, descreva seu projeto.');
       return;
     }
     
     if (!formData.orcamento || !formData.prazo) {
-      alert('Por favor, preencha o orçamento e prazo desejados.');
+      toast.error('Por favor, preencha o orçamento e prazo desejados.');
       return;
     }
     
@@ -71,6 +72,7 @@ export default function Orcamento() {
       
       // Mostrar tela de sucesso
       setSuccess(true);
+      toast.success('Orçamento enviado com sucesso! Entraremos em contato em breve.');
       
       // Limpar formulário após 5 segundos
       setTimeout(() => {
@@ -90,7 +92,7 @@ export default function Orcamento() {
     } catch (error: any) {
       console.error('Erro ao enviar orçamento:', error);
       const errorMsg = error.response?.data?.message || 'Erro ao enviar orçamento. Tente novamente.';
-      alert(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
+      toast.error(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
     } finally {
       setLoading(false);
     }

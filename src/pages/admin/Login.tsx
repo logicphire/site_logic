@@ -20,8 +20,9 @@ export default function Login() {
       await login(email, password);
       navigate('/admin/dashboard');
     } catch (err: any) {
-      console.error(err);
-      setError('Email ou senha incorretos');
+      console.error('Erro no login:', err);
+      const errorMessage = err.response?.data?.message || 'Email ou senha incorretos. Tente novamente.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

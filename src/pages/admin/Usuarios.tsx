@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 
@@ -16,6 +17,8 @@ export default function Usuarios() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     nome: '',
@@ -46,18 +49,18 @@ export default function Usuarios() {
         // Atualizar usuário (sem senha)
         const { password, ...updateData } = formData;
         await api.patch(`/users/${editingUser.id}`, updateData);
-        alert('Usuário atualizado com sucesso!');
+        toast.success('Usuário atualizado com sucesso!');
       } else {
         // Criar novo usuário
         await api.post('/users', formData);
-        alert('Usuário cadastrado com sucesso!');
+        toast.success('Usuário cadastrado com sucesso!');
       }
       setShowModal(false);
       resetForm();
       loadUsers();
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 'Erro ao salvar usuário';
-      alert(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
+      toast.error(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
     }
   };
 
@@ -72,16 +75,24 @@ export default function Usuarios() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+  const handleDeleteClick = (id: number) => {
+    setUserToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
 
     try {
-      await api.delete(`/users/${id}`);
-      alert('Usuário excluído com sucesso!');
+      await api.delete(`/users/${userToDelete}`);
+      toast.success('Usuário excluído com sucesso!');
       loadUsers();
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 'Erro ao excluir usuário';
-      alert(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
     }
   };
 
@@ -112,7 +123,7 @@ export default function Usuarios() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="p-8 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
@@ -177,7 +188,7 @@ export default function Usuarios() {
                         Editar
                       </button>
                       <button
-                        onClick={() => handleDelete(user.id)}
+                        onClick={() => handleDeleteClick(user.id)}
                         className="text-red-400 hover:text-red-300 font-medium transition-colors"
                       >
                         Excluir
@@ -300,6 +311,55 @@ export default function Usuarios() {
               </form>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              className="bg-dark-800 border border-red-500/30 rounded-2xl w-full max-w-md"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Confirmar Exclusão</h3>
+                    <p className="text-gray-400 mt-1">Esta ação não pode ser desfeita</p>
+                  </div>
+                </div>
+                <p className="text-gray-300 mb-6">
+                  Tem certeza que deseja excluir este usuário? Todos os dados serão permanentemente removidos.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setUserToDelete(null);
+                    }}
+                    className="flex-1 px-6 py-3 bg-dark-900 hover:bg-dark-700 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </AdminLayout>

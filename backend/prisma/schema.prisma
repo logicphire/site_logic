@@ -34,6 +34,7 @@ model Project {
   tecnologias String[]
   link        String?
   tipoLink    String?  @map("tipo_link")
+  repositorio String?
   destaque    Boolean  @default(false)
   ativo       Boolean  @default(true)
   ordem       Int      @default(0)

@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import Hero from '../components/Hero'
 import api from '../services/api'
 
 export default function Home() {
+  const location = useLocation();
   const [contatoForm, setContatoForm] = useState({
     nome: '',
     email: '',
@@ -12,18 +14,30 @@ export default function Home() {
   });
   const [enviandoContato, setEnviandoContato] = useState(false);
 
+  // Scroll para a seção quando vier de outra página com hash
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [location]);
+
   const handleContatoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!contatoForm.nome || !contatoForm.email || !contatoForm.mensagem) {
-      alert('Por favor, preencha todos os campos.');
+      toast.error('Por favor, preencha todos os campos.');
       return;
     }
     
     try {
       setEnviandoContato(true);
       await api.post('/contatos', contatoForm);
-      alert('Mensagem enviada com sucesso! Entraremos em contato em breve.');
+      toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.');
       setContatoForm({
         nome: '',
         email: '',
@@ -32,7 +46,7 @@ export default function Home() {
     } catch (error: any) {
       console.error('Erro ao enviar contato:', error);
       const errorMsg = error.response?.data?.message || 'Erro ao enviar mensagem. Tente novamente.';
-      alert(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
+      toast.error(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
     } finally {
       setEnviandoContato(false);
     }

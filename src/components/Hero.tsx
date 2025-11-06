@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { Zap, Rocket, Code2, Smartphone, Palette } from 'lucide-react'
 
 export default function Hero() {
   return (
@@ -245,10 +246,16 @@ export default function Hero() {
             animate={{ opacity: 1 }}
             transition={{ delay: 2 }}
           >
-            {['⚡', '🚀', '💻', '📱', '🎨'].map((icon, index) => (
+            {[
+              { Icon: Zap, color: 'text-primary' },
+              { Icon: Rocket, color: 'text-secondary' },
+              { Icon: Code2, color: 'text-accent-cyan' },
+              { Icon: Smartphone, color: 'text-accent-purple' },
+              { Icon: Palette, color: 'text-accent-pink' }
+            ].map(({ Icon, color }, index) => (
               <motion.div
                 key={index}
-                className="text-3xl opacity-60 hover:opacity-100 transition-opacity cursor-default"
+                className={`${color} opacity-60 hover:opacity-100 transition-opacity cursor-default`}
                 animate={{ 
                   y: [0, -10, 0],
                   rotate: [0, 5, 0],
@@ -261,7 +268,7 @@ export default function Hero() {
                 }}
                 whileHover={{ scale: 1.2 }}
               >
-                {icon}
+                <Icon size={32} strokeWidth={1.5} />
               </motion.div>
             ))}
           </motion.div>

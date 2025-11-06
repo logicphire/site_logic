@@ -1,6 +1,7 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrcamentoDto } from './dto/create-orcamento.dto';
 import { UpdateOrcamentoStatusDto } from './dto/update-orcamento-status.dto';
+import { SendEmailOrcamentoDto } from './dto/send-email-orcamento.dto';
 export declare class OrcamentosService {
     private prisma;
     constructor(prisma: PrismaService);
@@ -85,5 +86,17 @@ export declare class OrcamentosService {
         emAnalise: number;
         respondidos: number;
         fechados: number;
+    }>;
+    sendEmail(id: number, emailData: SendEmailOrcamentoDto): Promise<{
+        success: boolean;
+        message: string;
+        emailData: {
+            assunto: string;
+            mensagem: string;
+            valorOrcamento?: string;
+            prazoEntrega?: string;
+            to: string;
+            subject: string;
+        };
     }>;
 }

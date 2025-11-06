@@ -8,6 +8,7 @@ export declare class CreateProjectDto {
     tecnologias: string[];
     link?: string;
     tipoLink?: string;
+    repositorio?: string;
     destaque?: boolean;
     ativo?: boolean;
     ordem?: number;

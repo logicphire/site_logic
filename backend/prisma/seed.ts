@@ -11,6 +11,18 @@ async function main() {
   await prisma.project.deleteMany();
   await prisma.user.deleteMany();
 
+  // Criar usuário admin padrão
+  const adminUser = await prisma.user.create({
+    data: {
+      email: 'admin@sitelogic.com',
+      nome: 'Administrador',
+      password: 'admin@2025', // IMPORTANTE: Trocar esta senha após primeiro login!
+      role: 'super_admin',
+      ativo: true,
+    },
+  });
+  console.log(`✅ Usuário admin criado: ${adminUser.email}`);
+
   // Criar projetos
   const projects = await prisma.project.createMany({
     data: [

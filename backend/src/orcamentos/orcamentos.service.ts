@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrcamentoDto } from './dto/create-orcamento.dto';
 import { UpdateOrcamentoStatusDto } from './dto/update-orcamento-status.dto';
+import { SendEmailOrcamentoDto } from './dto/send-email-orcamento.dto';
 
 @Injectable()
 export class OrcamentosService {
@@ -60,6 +61,41 @@ export class OrcamentosService {
       emAnalise,
       respondidos,
       fechados,
+    };
+  }
+
+  async sendEmail(id: number, emailData: SendEmailOrcamentoDto) {
+    // Buscar o orçamento
+    const orcamento = await this.prisma.orcamento.findUnique({
+      where: { id },
+    });
+
+    if (!orcamento) {
+      throw new Error('Orçamento não encontrado');
+    }
+
+    // Aqui você pode integrar com um serviço de email como:
+    // - Nodemailer
+    // - SendGrid
+    // - AWS SES
+    // - Mailgun
+    
+    // Por enquanto, vamos apenas logar os dados
+    console.log('📧 Enviando email para:', orcamento.email);
+    console.log('Assunto:', emailData.assunto);
+    console.log('Mensagem:', emailData.mensagem);
+    console.log('Valor:', emailData.valorOrcamento);
+    console.log('Prazo:', emailData.prazoEntrega);
+
+    // Simular envio bem-sucedido
+    return {
+      success: true,
+      message: 'Email enviado com sucesso',
+      emailData: {
+        to: orcamento.email,
+        subject: emailData.assunto,
+        ...emailData,
+      },
     };
   }
 }

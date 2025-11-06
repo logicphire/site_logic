@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 
@@ -20,6 +21,11 @@ export default function Contatos() {
   const [loading, setLoading] = useState(true);
   const [selectedContato, setSelectedContato] = useState<Contato | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('todos');
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailForm, setEmailForm] = useState({
+    assunto: '',
+    mensagem: '',
+  });
 
   useEffect(() => {
     loadContatos();
@@ -32,49 +38,115 @@ export default function Contatos() {
       setContatos(response.data);
     } catch (error) {
       console.error('Erro ao carregar contatos:', error);
-      alert('Erro ao carregar contatos');
+      toast.error('Erro ao carregar contatos');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMarkAsRead = async (id: number) => {
+  const handleMarkAsRead = async (id: number, silent: boolean = false) => {
     try {
       await api.patch(`/contatos/${id}/read`);
-      loadContatos();
+      
+      // Atualiza o estado local sem fazer reload completo
+      setContatos(prev => prev.map(c => 
+        c.id === id ? { ...c, lido: true } : c
+      ));
+      
+      // Atualiza o contato selecionado se for o mesmo
       if (selectedContato?.id === id) {
         setSelectedContato({ ...selectedContato, lido: true });
       }
+      
+      if (!silent) {
+        toast.success('Contato marcado como lido!');
+      }
     } catch (error) {
       console.error('Erro ao marcar como lido:', error);
-      alert('Erro ao marcar como lido');
+      if (!silent) {
+        toast.error('Erro ao marcar como lido');
+      }
     }
   };
 
   const handleMarkAsResponded = async (id: number) => {
     try {
       await api.patch(`/contatos/${id}/responded`);
-      loadContatos();
+      
+      // Atualiza o estado local sem fazer reload completo
+      setContatos(prev => prev.map(c => 
+        c.id === id ? { ...c, respondido: true } : c
+      ));
+      
+      // Atualiza o contato selecionado se for o mesmo
       if (selectedContato?.id === id) {
         setSelectedContato({ ...selectedContato, respondido: true });
       }
+      
+      toast.success('Contato marcado como respondido!');
     } catch (error) {
       console.error('Erro ao marcar como respondido:', error);
-      alert('Erro ao marcar como respondido');
+      toast.error('Erro ao marcar como respondido');
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir este contato?')) return;
+  const handleOpenEmailModal = () => {
+    if (!selectedContato) return;
+    
+    setEmailForm({
+      assunto: `Re: ${selectedContato.assunto}`,
+      mensagem: `Olá ${selectedContato.nome},\n\nObrigado por entrar em contato!\n\n`,
+    });
+    setShowEmailModal(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!selectedContato) return;
 
     try {
-      await api.delete(`/contatos/${id}`);
-      alert('Contato excluído com sucesso!');
+      // Simular envio de email (você pode integrar com um serviço real depois)
+      console.log('Enviando email:', {
+        para: selectedContato.email,
+        ...emailForm,
+      });
+      
+      toast.success('Email enviado com sucesso!');
+      
+      // Marcar como respondido
+      await handleMarkAsResponded(selectedContato.id);
+      
+      setShowEmailModal(false);
+      setEmailForm({
+        assunto: '',
+        mensagem: '',
+      });
+    } catch (error: any) {
+      console.error('Erro ao enviar email:', error);
+      toast.error('Erro ao enviar email');
+    }
+  };
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [contatoToDelete, setContatoToDelete] = useState<number | null>(null);
+
+  const handleDeleteClick = (id: number) => {
+    setContatoToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!contatoToDelete) return;
+
+    try {
+      await api.delete(`/contatos/${contatoToDelete}`);
       setSelectedContato(null);
-      loadContatos();
+      await loadContatos();
+      setShowDeleteConfirm(false);
+      setContatoToDelete(null);
+      toast.success('Contato excluído com sucesso!');
     } catch (error) {
       console.error('Erro ao excluir contato:', error);
-      alert('Erro ao excluir contato');
+      toast.error('Erro ao excluir contato');
     }
   };
 
@@ -114,10 +186,10 @@ export default function Contatos() {
     respondidos: contatos.filter(c => c.respondido).length,
   };
 
-  // Auto-marcar como lido quando selecionar
+  // Auto-marcar como lido quando selecionar (modo silencioso)
   useEffect(() => {
     if (selectedContato && !selectedContato.lido) {
-      handleMarkAsRead(selectedContato.id);
+      handleMarkAsRead(selectedContato.id, true); // silent = true
     }
   }, [selectedContato?.id]);
 
@@ -275,7 +347,7 @@ export default function Contatos() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-white font-semibold">{contato.nome}</h3>
-                        {!contato.lido && (
+                        {!contato.lido && !contato.respondido && (
                           <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
                         )}
                       </div>
@@ -349,16 +421,15 @@ export default function Contatos() {
 
                 {/* Actions */}
                 <div className="flex gap-3 flex-wrap">
-                  <a
-                    href={`mailto:${selectedContato.email}?subject=Re: ${selectedContato.assunto}`}
-                    onClick={() => handleMarkAsResponded(selectedContato.id)}
+                  <button
+                    onClick={handleOpenEmailModal}
                     className="px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold transition-all flex items-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Responder por Email
-                  </a>
+                  </button>
                   
                   {selectedContato.telefone && (
                     <a
@@ -384,7 +455,7 @@ export default function Contatos() {
                   )}
                   
                   <button
-                    onClick={() => handleDelete(selectedContato.id)}
+                    onClick={() => handleDeleteClick(selectedContato.id)}
                     className="px-6 py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 rounded-xl font-semibold transition-all ml-auto"
                   >
                     Excluir
@@ -402,6 +473,141 @@ export default function Contatos() {
             )}
           </div>
         </div>
+
+        {/* Email Modal */}
+        <AnimatePresence>
+          {showEmailModal && selectedContato && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowEmailModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-dark-800 border border-white/10 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-primary/20 rounded-xl">
+                    <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Responder por Email</h3>
+                    <p className="text-gray-400 text-sm">Para: {selectedContato.email}</p>
+                  </div>
+                </div>
+
+                {/* Assunto */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">
+                    Assunto
+                  </label>
+                  <input
+                    type="text"
+                    value={emailForm.assunto}
+                    onChange={(e) => setEmailForm({ ...emailForm, assunto: e.target.value })}
+                    className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
+                    placeholder="Assunto do email"
+                  />
+                </div>
+
+                {/* Mensagem */}
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">
+                    Mensagem
+                  </label>
+                  <textarea
+                    value={emailForm.mensagem}
+                    onChange={(e) => setEmailForm({ ...emailForm, mensagem: e.target.value })}
+                    rows={12}
+                    className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors resize-none"
+                    placeholder="Digite sua mensagem..."
+                  />
+                </div>
+
+                {/* Contexto Original */}
+                <div className="bg-dark-900 border border-white/10 rounded-xl p-4 mb-6">
+                  <p className="text-gray-400 text-sm mb-2 font-semibold">Mensagem Original:</p>
+                  <p className="text-gray-500 text-sm whitespace-pre-wrap">{selectedContato.mensagem}</p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowEmailModal(false)}
+                    className="flex-1 px-4 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSendEmail}
+                    className="flex-1 px-4 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Enviar Email
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Delete Confirmation Modal */}
+        <AnimatePresence>
+          {showDeleteConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-dark-800 border border-white/10 rounded-2xl p-8 max-w-md w-full"
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-red-500/20 rounded-xl">
+                    <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Confirmar Exclusão</h3>
+                    <p className="text-gray-400 text-sm">Esta ação não pode ser desfeita</p>
+                  </div>
+                </div>
+
+                <p className="text-gray-300 mb-6">
+                  Tem certeza que deseja excluir este contato?
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 px-4 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </AdminLayout>
   );

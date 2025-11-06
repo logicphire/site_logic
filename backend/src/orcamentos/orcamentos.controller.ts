@@ -12,6 +12,7 @@ import {
 import { OrcamentosService } from './orcamentos.service';
 import { CreateOrcamentoDto } from './dto/create-orcamento.dto';
 import { UpdateOrcamentoStatusDto } from './dto/update-orcamento-status.dto';
+import { SendEmailOrcamentoDto } from './dto/send-email-orcamento.dto';
 
 @Controller('orcamentos')
 export class OrcamentosController {
@@ -43,6 +44,14 @@ export class OrcamentosController {
     @Body() updateStatusDto: UpdateOrcamentoStatusDto,
   ) {
     return this.orcamentosService.updateStatus(id, updateStatusDto);
+  }
+
+  @Post(':id/send-email')
+  sendEmail(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() sendEmailDto: SendEmailOrcamentoDto,
+  ) {
+    return this.orcamentosService.sendEmail(id, sendEmailDto);
   }
 
   @Delete(':id')

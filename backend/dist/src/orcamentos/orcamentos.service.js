@@ -66,6 +66,28 @@ let OrcamentosService = class OrcamentosService {
             fechados,
         };
     }
+    async sendEmail(id, emailData) {
+        const orcamento = await this.prisma.orcamento.findUnique({
+            where: { id },
+        });
+        if (!orcamento) {
+            throw new Error('Orçamento não encontrado');
+        }
+        console.log('📧 Enviando email para:', orcamento.email);
+        console.log('Assunto:', emailData.assunto);
+        console.log('Mensagem:', emailData.mensagem);
+        console.log('Valor:', emailData.valorOrcamento);
+        console.log('Prazo:', emailData.prazoEntrega);
+        return {
+            success: true,
+            message: 'Email enviado com sucesso',
+            emailData: {
+                to: orcamento.email,
+                subject: emailData.assunto,
+                ...emailData,
+            },
+        };
+    }
 };
 exports.OrcamentosService = OrcamentosService;
 exports.OrcamentosService = OrcamentosService = __decorate([

@@ -21,6 +21,7 @@ class CreateProjectDto {
     tecnologias;
     link;
     tipoLink;
+    repositorio;
     destaque;
     ativo;
     ordem;
@@ -71,6 +72,11 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateProjectDto.prototype, "tipoLink", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProjectDto.prototype, "repositorio", void 0);
 __decorate([
     (0, class_validator_1.IsBoolean)(),
     (0, class_validator_1.IsOptional)(),

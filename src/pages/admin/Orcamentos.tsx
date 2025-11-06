@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 
@@ -23,6 +24,15 @@ export default function Orcamentos() {
   const [loading, setLoading] = useState(true);
   const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('todos');
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [orcamentoToDelete, setOrcamentoToDelete] = useState<number | null>(null);
+  const [emailForm, setEmailForm] = useState({
+    assunto: '',
+    mensagem: '',
+    valorOrcamento: '',
+    prazoEntrega: '',
+  });
 
   useEffect(() => {
     loadOrcamentos();
@@ -35,7 +45,7 @@ export default function Orcamentos() {
       setOrcamentos(response.data);
     } catch (error) {
       console.error('Erro ao carregar orçamentos:', error);
-      alert('Erro ao carregar orçamentos');
+      toast.error('Erro ao carregar orçamentos');
     } finally {
       setLoading(false);
     }
@@ -44,28 +54,74 @@ export default function Orcamentos() {
   const handleStatusChange = async (id: number, newStatus: string) => {
     try {
       await api.patch(`/orcamentos/${id}/status`, { status: newStatus });
-      alert('Status atualizado com sucesso!');
+      toast.success('Status atualizado com sucesso!');
       loadOrcamentos();
       if (selectedOrcamento?.id === id) {
         setSelectedOrcamento({ ...selectedOrcamento, status: newStatus as any });
       }
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
-      alert('Erro ao atualizar status');
+      toast.error('Erro ao atualizar status');
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir este orçamento?')) return;
+  const handleDeleteClick = (id: number) => {
+    setOrcamentoToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!orcamentoToDelete) return;
 
     try {
-      await api.delete(`/orcamentos/${id}`);
-      alert('Orçamento excluído com sucesso!');
+      await api.delete(`/orcamentos/${orcamentoToDelete}`);
+      toast.success('Orçamento excluído com sucesso!');
       setSelectedOrcamento(null);
       loadOrcamentos();
     } catch (error) {
       console.error('Erro ao excluir orçamento:', error);
-      alert('Erro ao excluir orçamento');
+      toast.error('Erro ao excluir orçamento');
+    } finally {
+      setShowDeleteConfirm(false);
+      setOrcamentoToDelete(null);
+    }
+  };
+
+  const handleOpenEmailModal = () => {
+    if (!selectedOrcamento) return;
+    
+    setEmailForm({
+      assunto: `Resposta ao seu orçamento - ${selectedOrcamento.tipoServico}`,
+      mensagem: `Olá ${selectedOrcamento.nome},\n\nAgradecemos pelo seu interesse em nossos serviços!\n\nAnalisamos sua solicitação de orçamento para ${selectedOrcamento.tipoServico} e gostaríamos de apresentar nossa proposta:\n\n`,
+      valorOrcamento: '',
+      prazoEntrega: '',
+    });
+    setShowEmailModal(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!selectedOrcamento) return;
+
+    try {
+      // Enviar email através da API
+      await api.post(`/orcamentos/${selectedOrcamento.id}/send-email`, emailForm);
+      
+      toast.success('Email enviado com sucesso!');
+      
+      // Atualizar status para respondido
+      await handleStatusChange(selectedOrcamento.id, 'respondido');
+      
+      setShowEmailModal(false);
+      setEmailForm({
+        assunto: '',
+        mensagem: '',
+        valorOrcamento: '',
+        prazoEntrega: '',
+      });
+    } catch (error: any) {
+      console.error('Erro ao enviar email:', error);
+      const errorMsg = error.response?.data?.message || 'Erro ao enviar email';
+      toast.error(errorMsg);
     }
   };
 
@@ -368,17 +424,17 @@ export default function Orcamentos() {
                     <option value="em_analise">Em Análise</option>
                     <option value="respondido">Respondido</option>
                   </select>
-                  <a
-                    href={`mailto:${selectedOrcamento.email}?subject=Resposta ao seu orçamento - ${selectedOrcamento.tipoServico}`}
+                  <button
+                    onClick={handleOpenEmailModal}
                     className="px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold transition-all flex items-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Responder por Email
-                  </a>
+                  </button>
                   <button
-                    onClick={() => handleDelete(selectedOrcamento.id)}
+                    onClick={() => handleDeleteClick(selectedOrcamento.id)}
                     className="px-6 py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 rounded-xl font-semibold transition-all"
                   >
                     Excluir
@@ -397,6 +453,177 @@ export default function Orcamentos() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Email */}
+      <AnimatePresence>
+        {showEmailModal && selectedOrcamento && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              className="bg-dark-800 border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-white">Enviar Email de Resposta</h3>
+                  <p className="text-gray-400 mt-1">
+                    Para: <span className="text-primary">{selectedOrcamento.email}</span> ({selectedOrcamento.nome})
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Assunto */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">
+                    Assunto
+                  </label>
+                  <input
+                    type="text"
+                    value={emailForm.assunto}
+                    onChange={(e) => setEmailForm({ ...emailForm, assunto: e.target.value })}
+                    className="w-full px-4 py-3 bg-dark-900 border border-white/10 rounded-xl text-white focus:border-primary focus:outline-none transition-all"
+                    placeholder="Assunto do email"
+                  />
+                </div>
+
+                {/* Informações da Proposta */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                      Valor do Orçamento
+                    </label>
+                    <input
+                      type="text"
+                      value={emailForm.valorOrcamento}
+                      onChange={(e) => setEmailForm({ ...emailForm, valorOrcamento: e.target.value })}
+                      className="w-full px-4 py-3 bg-dark-900 border border-white/10 rounded-xl text-white focus:border-primary focus:outline-none transition-all"
+                      placeholder="Ex: R$ 5.000,00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                      Prazo de Entrega
+                    </label>
+                    <input
+                      type="text"
+                      value={emailForm.prazoEntrega}
+                      onChange={(e) => setEmailForm({ ...emailForm, prazoEntrega: e.target.value })}
+                      className="w-full px-4 py-3 bg-dark-900 border border-white/10 rounded-xl text-white focus:border-primary focus:outline-none transition-all"
+                      placeholder="Ex: 30 dias"
+                    />
+                  </div>
+                </div>
+
+                {/* Mensagem */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">
+                    Mensagem
+                  </label>
+                  <textarea
+                    value={emailForm.mensagem}
+                    onChange={(e) => setEmailForm({ ...emailForm, mensagem: e.target.value })}
+                    rows={12}
+                    className="w-full px-4 py-3 bg-dark-900 border border-white/10 rounded-xl text-white focus:border-primary focus:outline-none transition-all resize-none"
+                    placeholder="Digite a mensagem do email..."
+                  />
+                </div>
+
+                {/* Preview Box */}
+                <div className="bg-dark-900 border border-primary/20 rounded-xl p-4">
+                  <h4 className="text-sm font-semibold text-primary mb-2">Preview da Proposta:</h4>
+                  <div className="text-sm text-gray-300 space-y-1">
+                    {emailForm.valorOrcamento && (
+                      <p>💰 Valor: <span className="text-white font-medium">{emailForm.valorOrcamento}</span></p>
+                    )}
+                    {emailForm.prazoEntrega && (
+                      <p>📅 Prazo: <span className="text-white font-medium">{emailForm.prazoEntrega}</span></p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-white/10 flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="px-6 py-3 bg-dark-900 hover:bg-dark-700 text-white rounded-xl font-semibold transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSendEmail}
+                  disabled={!emailForm.assunto || !emailForm.mensagem}
+                  className="px-6 py-3 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  Enviar Email
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              className="bg-dark-800 border border-red-500/30 rounded-2xl w-full max-w-md"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Confirmar Exclusão</h3>
+                    <p className="text-gray-400 mt-1">Esta ação não pode ser desfeita</p>
+                  </div>
+                </div>
+                <p className="text-gray-300 mb-6">
+                  Tem certeza que deseja excluir este orçamento? Todos os dados serão permanentemente removidos.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setOrcamentoToDelete(null);
+                    }}
+                    className="flex-1 px-6 py-3 bg-dark-900 hover:bg-dark-700 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </AdminLayout>
   );
 }

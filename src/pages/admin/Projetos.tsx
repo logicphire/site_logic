@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 
@@ -14,6 +15,7 @@ interface Project {
   plataforma: string;
   link?: string;
   tipoLink?: string;
+  repositorio?: string;
   destaque: boolean;
   createdAt: string;
 }
@@ -22,6 +24,8 @@ export default function Projetos() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({
     titulo: '',
@@ -33,6 +37,7 @@ export default function Projetos() {
     plataforma: '',
     link: '',
     tipoLink: 'live',
+    repositorio: '',
     destaque: false,
   });
 
@@ -47,7 +52,7 @@ export default function Projetos() {
       setProjects(response.data);
     } catch (error) {
       console.error('Erro ao carregar projetos:', error);
-      alert('Erro ao carregar projetos');
+      toast.error('Erro ao carregar projetos');
     } finally {
       setLoading(false);
     }
@@ -67,16 +72,17 @@ export default function Projetos() {
         tecnologias: formData.tecnologias.split(',').map((t: string) => t.trim()),
         link: formData.link || undefined,
         tipoLink: formData.tipoLink || undefined,
+        repositorio: formData.repositorio || undefined,
         destaque: formData.destaque,
         ativo: true,
       };
 
       if (editingProject) {
         await api.patch(`/projects/${editingProject.id}`, projectData);
-        alert('Projeto atualizado com sucesso!');
+        toast.success('Projeto atualizado com sucesso!');
       } else {
         await api.post('/projects', projectData);
-        alert('Projeto criado com sucesso!');
+        toast.success('Projeto criado com sucesso!');
       }
 
       setShowModal(false);
@@ -85,7 +91,7 @@ export default function Projetos() {
     } catch (error: any) {
       console.error('Erro ao salvar projeto:', error);
       const errorMsg = error.response?.data?.message || 'Erro ao salvar projeto';
-      alert(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
+      toast.error(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
     }
   };
 
@@ -101,21 +107,30 @@ export default function Projetos() {
       plataforma: project.plataforma,
       link: project.link || '',
       tipoLink: project.tipoLink || 'live',
+      repositorio: project.repositorio || '',
       destaque: project.destaque,
     });
     setShowModal(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir este projeto?')) return;
+  const handleDeleteClick = (id: number) => {
+    setProjectToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!projectToDelete) return;
 
     try {
-      await api.delete(`/projects/${id}`);
-      alert('Projeto excluído com sucesso!');
+      await api.delete(`/projects/${projectToDelete}`);
+      toast.success('Projeto excluído com sucesso!');
       loadProjects();
     } catch (error) {
       console.error('Erro ao excluir projeto:', error);
-      alert('Erro ao excluir projeto');
+      toast.error('Erro ao excluir projeto');
+    } finally {
+      setShowDeleteConfirm(false);
+      setProjectToDelete(null);
     }
   };
 
@@ -130,6 +145,7 @@ export default function Projetos() {
       plataforma: '',
       link: '',
       tipoLink: 'live',
+      repositorio: '',
       destaque: false,
     });
     setEditingProject(null);
@@ -251,7 +267,7 @@ export default function Projetos() {
                       Editar
                     </button>
                     <button
-                      onClick={() => handleDelete(project.id)}
+                      onClick={() => handleDeleteClick(project.id)}
                       className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 rounded-xl transition-all"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,24 +285,24 @@ export default function Projetos() {
         {/* Modal */}
         <AnimatePresence>
           {showModal && (
-            <>
+            <div className="fixed inset-0 z-40">
               {/* Backdrop */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowModal(false)}
-                className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
               />
 
               {/* Modal */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              >
-                <div className="bg-dark-800 border border-white/10 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-dark-800 border border-white/10 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10"
+                >
                   {/* Modal Header */}
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-white">
@@ -428,6 +444,28 @@ export default function Projetos() {
                       />
                     </div>
 
+                    {/* Campo condicional para repositório quando tipo é Open Source */}
+                    {formData.tipo === 'Open Source' && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <label className="block text-sm font-semibold text-white mb-2">
+                          Repositório GitHub *
+                        </label>
+                        <input
+                          type="url"
+                          required
+                          value={formData.repositorio}
+                          onChange={(e) => setFormData({ ...formData, repositorio: e.target.value })}
+                          className="w-full px-4 py-3 bg-dark-900 border border-white/10 rounded-xl text-white focus:border-primary focus:outline-none transition-all"
+                          placeholder="https://github.com/usuario/repositorio"
+                        />
+                      </motion.div>
+                    )}
+
                     <div className="flex items-center gap-4">
                       <input
                         type="checkbox"
@@ -458,12 +496,61 @@ export default function Projetos() {
                       </button>
                     </div>
                   </form>
-                </div>
-              </motion.div>
-            </>
+                </motion.div>
+              </div>
+            </div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <motion.div
+                className="bg-dark-800 border border-red-500/30 rounded-2xl w-full max-w-md"
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">Confirmar Exclusão</h3>
+                      <p className="text-gray-400 mt-1">Esta ação não pode ser desfeita</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-300 mb-6">
+                    Tem certeza que deseja excluir este projeto? Todos os dados serão permanentemente removidos.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setProjectToDelete(null);
+                      }}
+                      className="flex-1 px-6 py-3 bg-dark-900 hover:bg-dark-700 text-white rounded-xl font-semibold transition-all"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={confirmDelete}
+                      className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-all"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+      </AnimatePresence>
     </AdminLayout>
   );
 }
