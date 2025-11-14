@@ -1,1 +1,27 @@
 node_modules
+
+# Environment variables (credenciais sensíveis)
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/.env.local
+
+# Build outputs
+dist
+build
+.next
+out
+
+# IDE
+.vscode/settings.json
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+logs

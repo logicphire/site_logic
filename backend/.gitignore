@@ -1,5 +1,19 @@
 node_modules
+
 # Keep environment variables out of version control
 .env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# Sensitive files
+*.pem
+*.key
+*.p12
+*.pfx
+.env.backup
+.env.old
 
 /generated/prisma
