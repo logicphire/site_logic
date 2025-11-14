@@ -5,6 +5,8 @@ export declare class CreateOrcamentoDto {
     empresa?: string;
     tipoServico: string;
     prazo: string;
+    diasPersonalizados?: string;
+    dataInicio?: string;
     orcamento: string;
     descricaoProjeto: string;
 }

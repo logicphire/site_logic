@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as admin from 'firebase-admin';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -10,12 +11,15 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto) {
     try {
-      // Salvar no banco de dados (sem Firebase)
+      // Criptografar a senha antes de salvar
+      const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+      
+      // Salvar no banco de dados
       const user = await this.prisma.user.create({
         data: {
           email: createUserDto.email,
           nome: createUserDto.nome,
-          password: createUserDto.password, // Em produção usar bcrypt
+          password: hashedPassword,
           role: createUserDto.role || 'user',
         },
       });
@@ -77,10 +81,16 @@ export class UsersService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    // Atualizar no banco (sem Firebase)
+    // Se a senha foi fornecida, criptografá-la
+    const dataToUpdate: any = { ...updateUserDto };
+    if (updateUserDto.password) {
+      dataToUpdate.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    // Atualizar no banco
     const updatedUser = await this.prisma.user.update({
       where: { id },
-      data: updateUserDto,
+      data: dataToUpdate,
     });
 
     return {

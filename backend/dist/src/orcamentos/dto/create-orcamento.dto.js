@@ -18,6 +18,8 @@ class CreateOrcamentoDto {
     empresa;
     tipoServico;
     prazo;
+    diasPersonalizados;
+    dataInicio;
     orcamento;
     descricaoProjeto;
 }
@@ -52,6 +54,16 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateOrcamentoDto.prototype, "prazo", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateOrcamentoDto.prototype, "diasPersonalizados", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateOrcamentoDto.prototype, "dataInicio", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),

@@ -1,94 +1,103 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import InputMask from 'react-input-mask'
 import api from '../services/api'
+import { isValidPhone, removeMask } from '../utils/masks'
+
+// Schema de validação para o formulário de orçamento
+const orcamentoSchema = z.object({
+  nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  email: z.string().email('Email inválido'),
+  telefone: z.string().min(10, 'Telefone inválido').refine(isValidPhone, {
+    message: 'Telefone inválido'
+  }),
+  empresa: z.string().optional(),
+  tipoServico: z.string().min(1, 'Selecione um tipo de serviço'),
+  orcamento: z.string().min(1, 'Selecione uma faixa de orçamento'),
+  prazo: z.string().min(1, 'Selecione um prazo'),
+  diasPersonalizados: z.string().optional(),
+  dataInicio: z.string().optional(),
+  descricaoProjeto: z.string().min(20, 'Descrição deve ter no mínimo 20 caracteres')
+}).refine((data) => {
+  // Se prazo for personalizado, exige dias ou data de início
+  if (data.prazo === 'personalizado') {
+    return data.diasPersonalizados || data.dataInicio;
+  }
+  return true;
+}, {
+  message: 'Informe a quantidade de dias ou data de início',
+  path: ['diasPersonalizados']
+});
+
+type OrcamentoFormData = z.infer<typeof orcamentoSchema>;
 
 export default function Orcamento() {
-  const [formData, setFormData] = useState({
-    nome: '',
-    email: '',
-    telefone: '',
-    empresa: '',
-    tipoServico: '',
-    orcamento: '',
-    prazo: '',
-    descricaoProjeto: ''
-  });
-
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const { register, handleSubmit, formState: { errors }, reset, watch, trigger, control } = useForm<OrcamentoFormData>({
+    resolver: zodResolver(orcamentoSchema),
+    mode: 'onChange',
+    defaultValues: {
+      nome: '',
+      email: '',
+      telefone: '',
+      empresa: '',
+      tipoServico: '',
+      orcamento: '',
+      prazo: '',
+      diasPersonalizados: '',
+      dataInicio: '',
+      descricaoProjeto: ''
+    }
+  });
 
-  const nextStep = (e: React.MouseEvent) => {
-    e.preventDefault(); // Previne o submit do form
+  const formData = watch();
+
+  const nextStep = async (e: React.MouseEvent) => {
+    e.preventDefault();
     
-    // Validação simples para cada etapa
+    // Validação para cada etapa
+    let fieldsToValidate: (keyof OrcamentoFormData)[] = [];
+    
     if (step === 1) {
-      if (!formData.nome || !formData.email || !formData.telefone) {
-        toast.error('Por favor, preencha todos os campos obrigatórios.');
-        return;
-      }
+      fieldsToValidate = ['nome', 'email', 'telefone'];
     } else if (step === 2) {
-      if (!formData.tipoServico || !formData.orcamento || !formData.prazo) {
-        toast.error('Por favor, preencha todos os campos obrigatórios.');
-        return;
-      }
+      fieldsToValidate = ['tipoServico', 'orcamento', 'prazo'];
     }
     
-    setStep(step + 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const result = await trigger(fieldsToValidate);
+    
+    if (result) {
+      setStep(step + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      toast.error('Por favor, preencha todos os campos obrigatórios corretamente.');
+    }
   };
   
   const prevStep = (e: React.MouseEvent) => {
-    e.preventDefault(); // Previne o submit do form
+    e.preventDefault();
     setStep(step - 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validação final
-    if (!formData.descricaoProjeto) {
-      toast.error('Por favor, descreva seu projeto.');
-      return;
-    }
-    
-    if (!formData.orcamento || !formData.prazo) {
-      toast.error('Por favor, preencha o orçamento e prazo desejados.');
-      return;
-    }
-    
+  const onSubmit = async (data: OrcamentoFormData) => {
     try {
       setLoading(true);
-      await api.post('/orcamentos', formData);
+      await api.post('/orcamentos', data);
       
       // Mostrar tela de sucesso
       setSuccess(true);
       toast.success('Orçamento enviado com sucesso! Entraremos em contato em breve.');
       
-      // Limpar formulário após 5 segundos
-      setTimeout(() => {
-        setFormData({
-          nome: '',
-          email: '',
-          telefone: '',
-          empresa: '',
-          tipoServico: '',
-          orcamento: '',
-          prazo: '',
-          descricaoProjeto: ''
-        });
-        setStep(1);
-        setSuccess(false);
-      }, 5000);
+      // Rolar para o topo para visualizar a mensagem de sucesso
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error: any) {
       console.error('Erro ao enviar orçamento:', error);
       const errorMsg = error.response?.data?.message || 'Erro ao enviar orçamento. Tente novamente.';
@@ -270,9 +279,23 @@ export default function Orcamento() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    reset();
+                    setStep(1);
+                    setSuccess(false);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl font-semibold hover:scale-105 transition-transform"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Enviar Novo Orçamento
+                </motion.button>
                 <motion.a
                   href="/"
-                  className="px-6 py-3 bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl font-semibold hover:scale-105 transition-transform"
+                  className="px-6 py-3 bg-white/10 border border-white/20 text-white rounded-xl font-semibold hover:bg-white/20 transition-all"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -287,10 +310,6 @@ export default function Orcamento() {
                   Ver Nossos Projetos
                 </motion.a>
               </div>
-
-              <p className="text-gray-500 text-sm mt-6">
-                Redirecionando automaticamente em 5 segundos...
-              </p>
             </motion.div>
           </motion.div>
         ) : (
@@ -299,7 +318,7 @@ export default function Orcamento() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(onSubmit)}
         >
           {/* Step 1: Informações Pessoais */}
           {step === 1 && (
@@ -317,49 +336,77 @@ export default function Orcamento() {
                   <label className="block text-sm font-medium text-gray-300 mb-2">Nome Completo*</label>
                   <input
                     type="text"
-                    name="nome"
-                    value={formData.nome}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-primary focus:outline-none transition-colors"
+                    {...register('nome')}
+                    className={`w-full p-3 rounded-lg bg-gray-800/50 border-2 text-white focus:outline-none transition-all ${
+                      errors.nome 
+                        ? 'border-red-500 focus:border-red-400' 
+                        : formData.nome 
+                        ? 'border-green-500 focus:border-green-400' 
+                        : 'border-transparent focus:border-primary'
+                    }`}
                     placeholder="Seu nome completo"
                   />
+                  {errors.nome && <p className="text-red-400 text-sm mt-1">{errors.nome.message}</p>}
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">E-mail*</label>
                   <input
                     type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-primary focus:outline-none transition-colors"
+                    {...register('email')}
+                    className={`w-full p-3 rounded-lg bg-gray-800/50 border-2 text-white focus:outline-none transition-all ${
+                      errors.email 
+                        ? 'border-red-500 focus:border-red-400' 
+                        : formData.email 
+                        ? 'border-green-500 focus:border-green-400' 
+                        : 'border-transparent focus:border-primary'
+                    }`}
                     placeholder="seu@email.com"
                   />
+                  {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>}
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Telefone/WhatsApp*</label>
-                  <input
-                    type="tel"
+                  <Controller
                     name="telefone"
-                    value={formData.telefone}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-primary focus:outline-none transition-colors"
-                    placeholder="(11) 99999-9999"
+                    control={control}
+                    render={({ field }) => (
+                      <InputMask
+                        mask="(99) 99999-9999"
+                        value={field.value}
+                        onChange={field.onChange}
+                      >
+                        {(inputProps: any) => (
+                          <input
+                            {...inputProps}
+                            type="tel"
+                            className={`w-full p-3 rounded-lg bg-gray-800/50 border-2 text-white focus:outline-none transition-all ${
+                              errors.telefone 
+                                ? 'border-red-500 focus:border-red-400' 
+                                : formData.telefone 
+                                ? 'border-green-500 focus:border-green-400' 
+                                : 'border-transparent focus:border-primary'
+                            }`}
+                            placeholder="(11) 99999-9999"
+                          />
+                        )}
+                      </InputMask>
+                    )}
                   />
+                  {errors.telefone && <p className="text-red-400 text-sm mt-1">{errors.telefone.message}</p>}
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Empresa (opcional)</label>
                   <input
                     type="text"
-                    name="empresa"
-                    value={formData.empresa}
-                    onChange={handleInputChange}
-                    className="w-full p-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-primary focus:outline-none transition-colors"
+                    {...register('empresa')}
+                    className={`w-full p-3 rounded-lg bg-dark-900/50 border-2 text-white focus:outline-none transition-all ${
+                      formData.empresa 
+                        ? 'border-green-500 focus:border-green-400' 
+                        : 'border-transparent focus:border-primary'
+                    }`}
                     placeholder="Nome da sua empresa"
                   />
                 </div>
@@ -382,59 +429,115 @@ export default function Orcamento() {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Tipo de Serviço*</label>
                   <select
-                    name="tipoServico"
-                    value={formData.tipoServico}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-primary focus:outline-none transition-colors"
+                    {...register('tipoServico')}
+                    style={{ colorScheme: 'dark' }}
+                    className={`w-full p-3 rounded-lg bg-dark-900/50 border-2 text-white focus:outline-none transition-all ${
+                      errors.tipoServico 
+                        ? 'border-red-500 focus:border-red-400' 
+                        : formData.tipoServico 
+                        ? 'border-green-500 focus:border-green-400' 
+                        : 'border-transparent focus:border-primary'
+                    }`}
                   >
-                    <option value="">Selecione um serviço</option>
-                    <option value="desenvolvimento-sites">Desenvolvimento de Sites</option>
-                    <option value="desenvolvimento-app">Desenvolvimento de Aplicativos</option>
-                    <option value="loja-virtual">Loja Virtual (E-commerce)</option>
-                    <option value="design">Design e Identidade Visual</option>
-                    <option value="consultoria">Consultoria em Tecnologia</option>
-                    <option value="manutencao">Manutenção e Suporte</option>
-                    <option value="outros">Outros</option>
+                    <option value="" style={{ backgroundColor: '#0F0A1A' }}>Selecione um serviço</option>
+                    <option value="desenvolvimento-sites" style={{ backgroundColor: '#0F0A1A' }}>Desenvolvimento de Sites</option>
+                    <option value="desenvolvimento-app" style={{ backgroundColor: '#0F0A1A' }}>Desenvolvimento de Aplicativos</option>
+                    <option value="loja-virtual" style={{ backgroundColor: '#0F0A1A' }}>Loja Virtual (E-commerce)</option>
+                    <option value="design" style={{ backgroundColor: '#0F0A1A' }}>Design e Identidade Visual</option>
+                    <option value="consultoria" style={{ backgroundColor: '#0F0A1A' }}>Consultoria em Tecnologia</option>
+                    <option value="manutencao" style={{ backgroundColor: '#0F0A1A' }}>Manutenção e Suporte</option>
+                    <option value="outros" style={{ backgroundColor: '#0F0A1A' }}>Outros</option>
                   </select>
+                  {errors.tipoServico && <p className="text-red-400 text-sm mt-1">{errors.tipoServico.message}</p>}
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Orçamento Estimado*</label>
                   <select
-                    name="orcamento"
-                    value={formData.orcamento}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-primary focus:outline-none transition-colors"
+                    {...register('orcamento')}
+                    style={{ colorScheme: 'dark' }}
+                    className={`w-full p-3 rounded-lg bg-dark-900/50 border-2 text-white focus:outline-none transition-all ${
+                      errors.orcamento 
+                        ? 'border-red-500 focus:border-red-400' 
+                        : formData.orcamento 
+                        ? 'border-green-500 focus:border-green-400' 
+                        : 'border-transparent focus:border-primary'
+                    }`}
                   >
-                    <option value="">Selecione uma faixa</option>
-                    <option value="ate-5k">Até R$ 5.000</option>
-                    <option value="5k-15k">R$ 5.000 - R$ 15.000</option>
-                    <option value="15k-50k">R$ 15.000 - R$ 50.000</option>
-                    <option value="50k-100k">R$ 50.000 - R$ 100.000</option>
-                    <option value="acima-100k">Acima de R$ 100.000</option>
-                    <option value="conversar">Prefiro conversar</option>
+                    <option value="" style={{ backgroundColor: '#0F0A1A' }}>Selecione uma faixa</option>
+                    <option value="ate-5k" style={{ backgroundColor: '#0F0A1A' }}>Até R$ 5.000</option>
+                    <option value="5k-15k" style={{ backgroundColor: '#0F0A1A' }}>R$ 5.000 - R$ 15.000</option>
+                    <option value="15k-50k" style={{ backgroundColor: '#0F0A1A' }}>R$ 15.000 - R$ 50.000</option>
+                    <option value="50k-100k" style={{ backgroundColor: '#0F0A1A' }}>R$ 50.000 - R$ 100.000</option>
+                    <option value="acima-100k" style={{ backgroundColor: '#0F0A1A' }}>Acima de R$ 100.000</option>
+                    <option value="conversar" style={{ backgroundColor: '#0F0A1A' }}>Prefiro conversar</option>
                   </select>
+                  {errors.orcamento && <p className="text-red-400 text-sm mt-1">{errors.orcamento.message}</p>}
                 </div>
                 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-300 mb-2">Prazo Desejado*</label>
                   <select
-                    name="prazo"
-                    value={formData.prazo}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-primary focus:outline-none transition-colors"
+                    {...register('prazo')}
+                    style={{ colorScheme: 'dark' }}
+                    className={`w-full p-3 rounded-lg bg-dark-900/50 border-2 text-white focus:outline-none transition-all ${
+                      errors.prazo 
+                        ? 'border-red-500 focus:border-red-400' 
+                        : formData.prazo 
+                        ? 'border-green-500 focus:border-green-400' 
+                        : 'border-transparent focus:border-primary'
+                    }`}
                   >
-                    <option value="">Selecione um prazo</option>
-                    <option value="urgente">Urgente (até 2 semanas)</option>
-                    <option value="1-mes">1 mês</option>
-                    <option value="2-3-meses">2-3 meses</option>
-                    <option value="3-6-meses">3-6 meses</option>
-                    <option value="flexivel">Flexível</option>
+                    <option value="" style={{ backgroundColor: '#0F0A1A' }}>Selecione um prazo</option>
+                    <option value="urgente" style={{ backgroundColor: '#0F0A1A' }}>Urgente (até 2 semanas)</option>
+                    <option value="1-mes" style={{ backgroundColor: '#0F0A1A' }}>1 mês</option>
+                    <option value="2-3-meses" style={{ backgroundColor: '#0F0A1A' }}>2-3 meses</option>
+                    <option value="3-6-meses" style={{ backgroundColor: '#0F0A1A' }}>3-6 meses</option>
+                    <option value="flexivel" style={{ backgroundColor: '#0F0A1A' }}>Flexível</option>
+                    <option value="personalizado" style={{ backgroundColor: '#0F0A1A' }}>Personalizado</option>
                   </select>
+                  {errors.prazo && <p className="text-red-400 text-sm mt-1">{errors.prazo.message}</p>}
                 </div>
+
+                {/* Campos condicionais quando prazo for personalizado */}
+                {formData.prazo === 'personalizado' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Quantidade de Dias</label>
+                      <input
+                        type="number"
+                        {...register('diasPersonalizados')}
+                        className={`w-full p-3 rounded-lg bg-dark-900/50 border-2 text-white focus:outline-none transition-all ${
+                          errors.diasPersonalizados 
+                            ? 'border-red-500 focus:border-red-400' 
+                            : formData.diasPersonalizados 
+                            ? 'border-green-500 focus:border-green-400' 
+                            : 'border-transparent focus:border-primary'
+                        }`}
+                        placeholder="Ex: 30, 60, 90..."
+                        min="1"
+                      />
+                      {errors.diasPersonalizados && <p className="text-red-400 text-sm mt-1">{errors.diasPersonalizados.message}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Data de Início Desejada</label>
+                      <input
+                        type="date"
+                        {...register('dataInicio')}
+                        className={`w-full p-3 rounded-lg bg-dark-900/50 border-2 text-white focus:outline-none transition-all ${
+                          errors.dataInicio 
+                            ? 'border-red-500 focus:border-red-400' 
+                            : formData.dataInicio 
+                            ? 'border-green-500 focus:border-green-400' 
+                            : 'border-transparent focus:border-primary'
+                        }`}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                      {errors.dataInicio && <p className="text-red-400 text-sm mt-1">{errors.dataInicio.message}</p>}
+                    </div>
+                  </>
+                )}
               </div>
             </motion.div>
           )}
@@ -466,14 +569,18 @@ export default function Orcamento() {
                   </div>
                 </label>
                 <textarea
-                  name="descricaoProjeto"
-                  value={formData.descricaoProjeto}
-                  onChange={handleInputChange}
+                  {...register('descricaoProjeto')}
                   rows={8}
-                  required
-                  className="w-full p-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-primary focus:outline-none transition-colors resize-none"
+                  className={`w-full p-3 rounded-lg bg-gray-800/50 border-2 text-white focus:outline-none transition-all resize-none ${
+                    errors.descricaoProjeto 
+                      ? 'border-red-500 focus:border-red-400' 
+                      : formData.descricaoProjeto && formData.descricaoProjeto.length >= 20
+                      ? 'border-green-500 focus:border-green-400' 
+                      : 'border-transparent focus:border-primary'
+                  }`}
                   placeholder="Descreva seu projeto em detalhes: objetivos, funcionalidades desejadas, referências, público-alvo, etc. Quanto mais informações, melhor será nossa proposta!"
                 />
+                {errors.descricaoProjeto && <p className="text-red-400 text-sm mt-1">{errors.descricaoProjeto.message}</p>}
               </div>
               
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">

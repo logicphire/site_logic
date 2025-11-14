@@ -10,11 +10,13 @@ exports.OrcamentosModule = void 0;
 const common_1 = require("@nestjs/common");
 const orcamentos_service_1 = require("./orcamentos.service");
 const orcamentos_controller_1 = require("./orcamentos.controller");
+const email_module_1 = require("../email/email.module");
 let OrcamentosModule = class OrcamentosModule {
 };
 exports.OrcamentosModule = OrcamentosModule;
 exports.OrcamentosModule = OrcamentosModule = __decorate([
     (0, common_1.Module)({
+        imports: [email_module_1.EmailModule],
         controllers: [orcamentos_controller_1.OrcamentosController],
         providers: [orcamentos_service_1.OrcamentosService],
     })

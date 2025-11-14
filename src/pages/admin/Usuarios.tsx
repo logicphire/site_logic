@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 
@@ -13,18 +16,72 @@ interface User {
   createdAt: string;
 }
 
+// Schema de validação para criação de usuário
+const createUserSchema = z.object({
+  nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  role: z.string().min(1, 'Selecione um papel')
+});
+
+// Schema de validação para edição de usuário
+const updateUserSchema = z.object({
+  nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  email: z.string().email('Email inválido'),
+  role: z.string().min(1, 'Selecione um papel')
+});
+
+// Schema de validação para alteração de senha
+const changePasswordSchema = z.object({
+  newPassword: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  confirmPassword: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres')
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: 'As senhas não coincidem',
+  path: ['confirmPassword']
+});
+
+type CreateUserFormData = z.infer<typeof createUserSchema>;
+type UpdateUserFormData = z.infer<typeof updateUserSchema>;
+type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+
 export default function Usuarios() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({
-    nome: '',
-    email: '',
-    password: '',
-    role: 'admin'
+  const [userToChangePassword, setUserToChangePassword] = useState<User | null>(null);
+
+  // Form para criar usuário
+  const createForm = useForm<CreateUserFormData>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      nome: '',
+      email: '',
+      password: '',
+      role: 'admin'
+    }
+  });
+
+  // Form para editar usuário
+  const updateForm = useForm<UpdateUserFormData>({
+    resolver: zodResolver(updateUserSchema),
+    defaultValues: {
+      nome: '',
+      email: '',
+      role: 'admin'
+    }
+  });
+
+  // Form para alterar senha
+  const passwordForm = useForm<ChangePasswordFormData>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      newPassword: '',
+      confirmPassword: ''
+    }
   });
 
   useEffect(() => {
@@ -42,34 +99,38 @@ export default function Usuarios() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateSubmit = async (data: CreateUserFormData) => {
     try {
-      if (editingUser) {
-        // Atualizar usuário (sem senha)
-        const { password, ...updateData } = formData;
-        await api.patch(`/users/${editingUser.id}`, updateData);
-        toast.success('Usuário atualizado com sucesso!');
-      } else {
-        // Criar novo usuário
-        await api.post('/users', formData);
-        toast.success('Usuário cadastrado com sucesso!');
-      }
+      await api.post('/users', data);
+      toast.success('Usuário cadastrado com sucesso!');
       setShowModal(false);
-      resetForm();
+      createForm.reset();
       loadUsers();
     } catch (error: any) {
-      const errorMsg = error.response?.data?.message || 'Erro ao salvar usuário';
+      const errorMsg = error.response?.data?.message || 'Erro ao criar usuário';
+      toast.error(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
+    }
+  };
+
+  const handleUpdateSubmit = async (data: UpdateUserFormData) => {
+    try {
+      await api.patch(`/users/${editingUser?.id}`, data);
+      toast.success('Usuário atualizado com sucesso!');
+      setShowModal(false);
+      updateForm.reset();
+      setEditingUser(null);
+      loadUsers();
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Erro ao atualizar usuário';
       toast.error(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
     }
   };
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
-    setFormData({
+    updateForm.reset({
       nome: user.nome,
       email: user.email,
-      password: '',
       role: user.role
     });
     setShowModal(true);
@@ -96,19 +157,36 @@ export default function Usuarios() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      nome: '',
-      email: '',
-      password: '',
-      role: 'admin'
-    });
+  const handleCloseModal = () => {
+    setShowModal(false);
+    createForm.reset();
+    updateForm.reset();
     setEditingUser(null);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    resetForm();
+  const handleOpenPasswordModal = (user: User) => {
+    setUserToChangePassword(user);
+    passwordForm.reset();
+    setShowPasswordModal(true);
+  };
+
+  const handleClosePasswordModal = () => {
+    setShowPasswordModal(false);
+    passwordForm.reset();
+    setUserToChangePassword(null);
+  };
+
+  const handlePasswordSubmit = async (data: ChangePasswordFormData) => {
+    try {
+      await api.patch(`/users/${userToChangePassword?.id}`, {
+        password: data.newPassword
+      });
+      toast.success('Senha atualizada com sucesso!');
+      handleClosePasswordModal();
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Erro ao atualizar senha';
+      toast.error(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
+    }
   };
 
   if (loading) {
@@ -180,19 +258,42 @@ export default function Usuarios() {
                     <td className="px-6 py-4 whitespace-nowrap text-gray-400">
                       {new Date(user.createdAt).toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
-                      <button
-                        onClick={() => handleEdit(user)}
-                        className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(user.id)}
-                        className="text-red-400 hover:text-red-300 font-medium transition-colors"
-                      >
-                        Excluir
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        <motion.button
+                          onClick={() => handleEdit(user)}
+                          className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          title="Editar usuário"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </motion.button>
+                        <motion.button
+                          onClick={() => handleOpenPasswordModal(user)}
+                          className="p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10 rounded-lg transition-all"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          title="Alterar senha"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                          </svg>
+                        </motion.button>
+                        <motion.button
+                          onClick={() => handleDeleteClick(user.id)}
+                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-all"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          title="Excluir usuário"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </motion.button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -229,74 +330,253 @@ export default function Usuarios() {
                 {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
               </h2>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-gray-300 mb-2 font-medium">
-                    Nome *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-gray-700 rounded-lg text-white focus:border-primary focus:outline-none transition-colors"
-                    required
-                  />
-                </div>
+              {editingUser ? (
+                <form onSubmit={updateForm.handleSubmit(handleUpdateSubmit)} className="space-y-4">
+                  <div>
+                    <label className="block text-gray-300 mb-2 font-medium">
+                      Nome *
+                    </label>
+                    <input
+                      type="text"
+                      {...updateForm.register('nome')}
+                      className={`w-full px-4 py-3 bg-dark-900/50 border-2 rounded-lg text-white focus:outline-none transition-all ${
+                        updateForm.formState.errors.nome 
+                          ? 'border-red-500 focus:border-red-400' 
+                          : updateForm.watch('nome')
+                          ? 'border-green-500 focus:border-green-400'
+                          : 'border-transparent focus:border-primary'
+                      }`}
+                    />
+                    {updateForm.formState.errors.nome && (
+                      <p className="text-red-400 text-sm mt-1">{updateForm.formState.errors.nome.message}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-gray-300 mb-2 font-medium">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-gray-700 rounded-lg text-white focus:border-primary focus:outline-none transition-colors"
-                    required
-                    disabled={!!editingUser}
-                  />
-                  {editingUser && (
+                  <div>
+                    <label className="block text-gray-300 mb-2 font-medium">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      {...updateForm.register('email')}
+                      className="w-full px-4 py-3 bg-dark-900/50 border border-gray-700 rounded-lg text-white focus:border-primary focus:outline-none transition-colors opacity-50 cursor-not-allowed"
+                      disabled
+                    />
                     <p className="text-xs text-gray-500 mt-1">
                       O email não pode ser alterado
                     </p>
-                  )}
-                </div>
+                  </div>
 
-                {!editingUser && (
+                  <div>
+                    <label className="block text-gray-300 mb-2 font-medium">
+                      Papel
+                    </label>
+                    <select
+                      {...updateForm.register('role')}
+                      className="w-full px-4 py-3 bg-dark-900/50 border border-gray-700 rounded-lg text-white focus:border-primary focus:outline-none transition-colors"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="super_admin">Super Admin</option>
+                    </select>
+                    {updateForm.formState.errors.role && (
+                      <p className="text-red-400 text-sm mt-1">{updateForm.formState.errors.role.message}</p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold transition-colors"
+                    >
+                      Atualizar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4">
+                  <div>
+                    <label className="block text-gray-300 mb-2 font-medium">
+                      Nome *
+                    </label>
+                    <input
+                      type="text"
+                      {...createForm.register('nome')}
+                      className={`w-full px-4 py-3 bg-dark-900/50 border-2 rounded-lg text-white focus:outline-none transition-all ${
+                        createForm.formState.errors.nome 
+                          ? 'border-red-500 focus:border-red-400' 
+                          : createForm.watch('nome')
+                          ? 'border-green-500 focus:border-green-400'
+                          : 'border-transparent focus:border-primary'
+                      }`}
+                    />
+                    {createForm.formState.errors.nome && (
+                      <p className="text-red-400 text-sm mt-1">{createForm.formState.errors.nome.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-300 mb-2 font-medium">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      {...createForm.register('email')}
+                      className={`w-full px-4 py-3 bg-dark-900/50 border-2 rounded-lg text-white focus:outline-none transition-all ${
+                        createForm.formState.errors.email 
+                          ? 'border-red-500 focus:border-red-400' 
+                          : createForm.watch('email')
+                          ? 'border-green-500 focus:border-green-400'
+                          : 'border-transparent focus:border-primary'
+                      }`}
+                    />
+                    {createForm.formState.errors.email && (
+                      <p className="text-red-400 text-sm mt-1">{createForm.formState.errors.email.message}</p>
+                    )}
+                  </div>
+
                   <div>
                     <label className="block text-gray-300 mb-2 font-medium">
                       Senha *
                     </label>
                     <input
                       type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-gray-700 rounded-lg text-white focus:border-primary focus:outline-none transition-colors"
-                      required
-                      minLength={6}
+                      {...createForm.register('password')}
+                      className={`w-full px-4 py-3 bg-dark-900/50 border-2 rounded-lg text-white focus:outline-none transition-all ${
+                        createForm.formState.errors.password 
+                          ? 'border-red-500 focus:border-red-400' 
+                          : createForm.watch('password') && createForm.watch('password').length >= 6
+                          ? 'border-green-500 focus:border-green-400'
+                          : 'border-transparent focus:border-primary'
+                      }`}
                       placeholder="Mínimo 6 caracteres"
                     />
+                    {createForm.formState.errors.password && (
+                      <p className="text-red-400 text-sm mt-1">{createForm.formState.errors.password.message}</p>
+                    )}
                   </div>
-                )}
+
+                  <div>
+                    <label className="block text-gray-300 mb-2 font-medium">
+                      Papel
+                    </label>
+                    <select
+                      {...createForm.register('role')}
+                      style={{ colorScheme: 'dark' }}
+                      className="w-full px-4 py-3 bg-dark-900/50 border border-transparent rounded-lg text-white focus:border-primary focus:outline-none transition-colors"
+                    >
+                      <option value="admin" style={{ backgroundColor: '#0F0A1A' }}>Admin</option>
+                      <option value="super_admin" style={{ backgroundColor: '#0F0A1A' }}>Super Admin</option>
+                    </select>
+                    {createForm.formState.errors.role && (
+                      <p className="text-red-400 text-sm mt-1">{createForm.formState.errors.role.message}</p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold transition-colors"
+                    >
+                      Cadastrar
+                    </button>
+                  </div>
+                </form>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Alteração de Senha */}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={handleClosePasswordModal}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-dark-800 border border-gray-700 rounded-2xl p-8 max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Alterar Senha</h2>
+                  <p className="text-gray-400 text-sm mt-1">{userToChangePassword?.nome}</p>
+                </div>
+              </div>
+
+              <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-4">
+                <div>
+                  <label className="block text-gray-300 mb-2 font-medium">
+                    Nova Senha *
+                  </label>
+                  <input
+                    type="password"
+                    {...passwordForm.register('newPassword')}
+                    className={`w-full px-4 py-3 bg-dark-900/50 border-2 rounded-lg text-white focus:outline-none transition-all ${
+                      passwordForm.formState.errors.newPassword 
+                        ? 'border-red-500 focus:border-red-400' 
+                        : passwordForm.watch('newPassword') && passwordForm.watch('newPassword').length >= 6
+                        ? 'border-green-500 focus:border-green-400'
+                        : 'border-transparent focus:border-primary'
+                    }`}
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                  {passwordForm.formState.errors.newPassword && (
+                    <p className="text-red-400 text-sm mt-1">{passwordForm.formState.errors.newPassword.message}</p>
+                  )}
+                </div>
 
                 <div>
                   <label className="block text-gray-300 mb-2 font-medium">
-                    Papel
+                    Confirmar Nova Senha *
                   </label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-gray-700 rounded-lg text-white focus:border-primary focus:outline-none transition-colors"
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="super_admin">Super Admin</option>
-                  </select>
+                  <input
+                    type="password"
+                    {...passwordForm.register('confirmPassword')}
+                    className={`w-full px-4 py-3 bg-dark-900/50 border-2 rounded-lg text-white focus:outline-none transition-all ${
+                      passwordForm.formState.errors.confirmPassword 
+                        ? 'border-red-500 focus:border-red-400' 
+                        : passwordForm.watch('confirmPassword') && passwordForm.watch('newPassword') === passwordForm.watch('confirmPassword')
+                        ? 'border-green-500 focus:border-green-400'
+                        : 'border-transparent focus:border-primary'
+                    }`}
+                    placeholder="Confirme a nova senha"
+                  />
+                  {passwordForm.formState.errors.confirmPassword && (
+                    <p className="text-red-400 text-sm mt-1">{passwordForm.formState.errors.confirmPassword.message}</p>
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-4">
                   <button
                     type="button"
-                    onClick={handleCloseModal}
+                    onClick={handleClosePasswordModal}
                     className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors"
                   >
                     Cancelar
@@ -305,7 +585,7 @@ export default function Usuarios() {
                     type="submit"
                     className="flex-1 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold transition-colors"
                   >
-                    {editingUser ? 'Atualizar' : 'Cadastrar'}
+                    Alterar Senha
                   </button>
                 </div>
               </form>

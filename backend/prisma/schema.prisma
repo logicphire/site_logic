@@ -48,19 +48,21 @@ model Project {
 }
 
 model Orcamento {
-  id               Int      @id @default(autoincrement())
-  nome             String
-  email            String
-  telefone         String
-  empresa          String?
-  tipoServico      String   @map("tipo_servico")
-  prazo            String
-  orcamento        String
-  descricaoProjeto String   @map("descricao_projeto")
-  status           String   @default("pendente")
-  notasInternas    String?  @map("notas_internas")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id                  Int      @id @default(autoincrement())
+  nome                String
+  email               String
+  telefone            String
+  empresa             String?
+  tipoServico         String   @map("tipo_servico")
+  prazo               String
+  diasPersonalizados  String?  @map("dias_personalizados")
+  dataInicio          String?  @map("data_inicio")
+  orcamento           String
+  descricaoProjeto    String   @map("descricao_projeto")
+  status              String   @default("pendente")
+  notasInternas       String?  @map("notas_internas")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   @@index([status])
   @@index([createdAt(sort: Desc)])

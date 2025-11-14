@@ -12,15 +12,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrcamentosService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const email_service_1 = require("../email/email.service");
 let OrcamentosService = class OrcamentosService {
     prisma;
-    constructor(prisma) {
+    emailService;
+    constructor(prisma, emailService) {
         this.prisma = prisma;
+        this.emailService = emailService;
     }
     async create(createOrcamentoDto) {
-        return this.prisma.orcamento.create({
+        const orcamento = await this.prisma.orcamento.create({
             data: createOrcamentoDto,
         });
+        this.emailService
+            .enviarEmailNovoOrcamento(createOrcamentoDto)
+            .catch((error) => {
+            console.error('Erro ao enviar email de orçamento:', error);
+        });
+        return orcamento;
     }
     async findAll(status) {
         return this.prisma.orcamento.findMany({
@@ -92,6 +101,7 @@ let OrcamentosService = class OrcamentosService {
 exports.OrcamentosService = OrcamentosService;
 exports.OrcamentosService = OrcamentosService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        email_service_1.EmailService])
 ], OrcamentosService);
 //# sourceMappingURL=orcamentos.service.js.map

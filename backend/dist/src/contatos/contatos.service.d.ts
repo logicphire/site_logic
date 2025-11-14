@@ -10,8 +10,8 @@ export declare class ContatosService {
         createdAt: Date;
         telefone: string | null;
         status: string;
-        respondido: boolean;
         mensagem: string;
+        respondido: boolean;
     }>;
     findAll(status?: string): Promise<{
         id: number;
@@ -20,8 +20,8 @@ export declare class ContatosService {
         createdAt: Date;
         telefone: string | null;
         status: string;
-        respondido: boolean;
         mensagem: string;
+        respondido: boolean;
     }[]>;
     findOne(id: number): Promise<{
         id: number;
@@ -30,8 +30,8 @@ export declare class ContatosService {
         createdAt: Date;
         telefone: string | null;
         status: string;
-        respondido: boolean;
         mensagem: string;
+        respondido: boolean;
     } | null>;
     markAsRead(id: number): Promise<{
         id: number;
@@ -40,8 +40,8 @@ export declare class ContatosService {
         createdAt: Date;
         telefone: string | null;
         status: string;
-        respondido: boolean;
         mensagem: string;
+        respondido: boolean;
     }>;
     markAsResponded(id: number): Promise<{
         id: number;
@@ -50,8 +50,8 @@ export declare class ContatosService {
         createdAt: Date;
         telefone: string | null;
         status: string;
-        respondido: boolean;
         mensagem: string;
+        respondido: boolean;
     }>;
     remove(id: number): Promise<{
         id: number;
@@ -60,8 +60,8 @@ export declare class ContatosService {
         createdAt: Date;
         telefone: string | null;
         status: string;
-        respondido: boolean;
         mensagem: string;
+        respondido: boolean;
     }>;
     getStats(): Promise<{
         total: number;

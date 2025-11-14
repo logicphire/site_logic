@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -21,11 +22,10 @@ export class AuthService {
       throw new UnauthorizedException('Email ou senha incorretos');
     }
 
-    console.log('🔑 Senha no banco:', user.password);
-    console.log('🔑 Senha fornecida:', password);
-
-    // Verificar senha (em produção usar bcrypt para comparar hash)
-    if (user.password !== password) {
+    // Verificar senha usando bcrypt
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
       console.log('❌ Senha incorreta');
       throw new UnauthorizedException('Email ou senha incorretos');
     }
@@ -58,11 +58,14 @@ export class AuthService {
       throw new UnauthorizedException('Email já cadastrado');
     }
 
-    // Criar novo usuário (em produção usar bcrypt para hash da senha)
+    // Criptografar a senha antes de salvar
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Criar novo usuário
     const user = await this.prisma.user.create({
       data: {
         email,
-        password, // Em produção: await bcrypt.hash(password, 10)
+        password: hashedPassword,
         nome,
         role: 'user',
       },

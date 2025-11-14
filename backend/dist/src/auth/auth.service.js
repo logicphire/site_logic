@@ -46,6 +46,7 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const crypto = __importStar(require("crypto"));
+const bcrypt = __importStar(require("bcrypt"));
 let AuthService = class AuthService {
     prisma;
     constructor(prisma) {
@@ -61,9 +62,8 @@ let AuthService = class AuthService {
             console.log('❌ Usuário não encontrado');
             throw new common_1.UnauthorizedException('Email ou senha incorretos');
         }
-        console.log('🔑 Senha no banco:', user.password);
-        console.log('🔑 Senha fornecida:', password);
-        if (user.password !== password) {
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
             console.log('❌ Senha incorreta');
             throw new common_1.UnauthorizedException('Email ou senha incorretos');
         }
@@ -87,10 +87,11 @@ let AuthService = class AuthService {
         if (existingUser) {
             throw new common_1.UnauthorizedException('Email já cadastrado');
         }
+        const hashedPassword = await bcrypt.hash(password, 10);
         const user = await this.prisma.user.create({
             data: {
                 email,
-                password,
+                password: hashedPassword,
                 nome,
                 role: 'user',
             },

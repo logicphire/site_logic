@@ -1,23 +1,39 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuth } from '../../contexts/AuthContext';
 
+// Schema de validação para login
+const loginSchema = z.object({
+  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres')
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     setError('');
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(data.email, data.password);
       navigate('/admin/dashboard');
     } catch (err: any) {
       console.error('Erro no login:', err);
@@ -58,7 +74,7 @@ export default function Login() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.6 }}
         >
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-300 mb-2">
@@ -67,12 +83,17 @@ export default function Login() {
               <input
                 type="email"
                 id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-dark-900 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
+                {...register('email')}
+                className={`w-full px-4 py-3 bg-dark-900 border-2 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all ${
+                  errors.email 
+                    ? 'border-red-500 focus:border-red-400' 
+                    : 'border-white/10 focus:border-primary'
+                }`}
                 placeholder="seu@email.com"
               />
+              {errors.email && (
+                <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>
+              )}
             </div>
 
             {/* Password */}
@@ -83,12 +104,17 @@ export default function Login() {
               <input
                 type="password"
                 id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-dark-900 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
+                {...register('password')}
+                className={`w-full px-4 py-3 bg-dark-900 border-2 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all ${
+                  errors.password 
+                    ? 'border-red-500 focus:border-red-400' 
+                    : 'border-white/10 focus:border-primary'
+                }`}
                 placeholder="••••••••"
               />
+              {errors.password && (
+                <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>
+              )}
             </div>
 
             {/* Error Message */}

@@ -14,6 +14,7 @@ const class_validator_1 = require("class-validator");
 class UpdateUserDto {
     nome;
     email;
+    password;
     role;
 }
 exports.UpdateUserDto = UpdateUserDto;
@@ -27,6 +28,12 @@ __decorate([
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(6, { message: 'A senha deve ter no mínimo 6 caracteres' }),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "password", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

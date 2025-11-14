@@ -3,15 +3,30 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrcamentoDto } from './dto/create-orcamento.dto';
 import { UpdateOrcamentoStatusDto } from './dto/update-orcamento-status.dto';
 import { SendEmailOrcamentoDto } from './dto/send-email-orcamento.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class OrcamentosService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async create(createOrcamentoDto: CreateOrcamentoDto) {
-    return this.prisma.orcamento.create({
+    // Criar orçamento no banco
+    const orcamento = await this.prisma.orcamento.create({
       data: createOrcamentoDto,
     });
+
+    // Enviar emails de notificação (em background, não bloqueia a resposta)
+    this.emailService
+      .enviarEmailNovoOrcamento(createOrcamentoDto)
+      .catch((error) => {
+        console.error('Erro ao enviar email de orçamento:', error);
+        // Não falhar a criação do orçamento se o email falhar
+      });
+
+    return orcamento;
   }
 
   async findAll(status?: string) {

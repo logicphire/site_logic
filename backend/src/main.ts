@@ -26,10 +26,12 @@ try {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // CORS
+  // CORS - Configuração mais permissiva
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', process.env.CORS_ORIGIN].filter(Boolean),
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
   // Validation Pipe Global
@@ -48,6 +50,7 @@ async function bootstrap() {
   await app.listen(port);
 
   console.log(`🚀 Servidor rodando em http://localhost:${port}`);
+  console.log(`✅ CORS habilitado para: http://localhost:5173`);
   console.log(`📡 API disponível em http://localhost:${port}/api`);
   console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
 }

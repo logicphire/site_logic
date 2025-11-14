@@ -1,18 +1,42 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import InputMask from 'react-input-mask'
 import toast from 'react-hot-toast'
 import Hero from '../components/Hero'
 import api from '../services/api'
+import { isValidPhone } from '../utils/masks'
+
+// Schema de validação para formulário de contato
+const contatoSchema = z.object({
+  nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  email: z.string().email('Email inválido'),
+  telefone: z.string().optional().refine((val) => !val || isValidPhone(val), {
+    message: 'Telefone inválido'
+  }),
+  mensagem: z.string().min(10, 'Mensagem deve ter no mínimo 10 caracteres')
+});
+
+type ContatoFormData = z.infer<typeof contatoSchema>;
 
 export default function Home() {
   const location = useLocation();
-  const [contatoForm, setContatoForm] = useState({
-    nome: '',
-    email: '',
-    mensagem: ''
-  });
   const [enviandoContato, setEnviandoContato] = useState(false);
+
+  const { register, handleSubmit, formState: { errors }, reset, watch, control } = useForm<ContatoFormData>({
+    resolver: zodResolver(contatoSchema),
+    defaultValues: {
+      nome: '',
+      email: '',
+      telefone: '',
+      mensagem: ''
+    }
+  });
+
+  const formData = watch();
 
   // Scroll para a seção quando vier de outra página com hash
   useEffect(() => {
@@ -26,23 +50,12 @@ export default function Home() {
     }
   }, [location]);
 
-  const handleContatoSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!contatoForm.nome || !contatoForm.email || !contatoForm.mensagem) {
-      toast.error('Por favor, preencha todos os campos.');
-      return;
-    }
-    
+  const onSubmitContato = async (data: ContatoFormData) => {
     try {
       setEnviandoContato(true);
-      await api.post('/contatos', contatoForm);
+      await api.post('/contatos', data);
       toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.');
-      setContatoForm({
-        nome: '',
-        email: '',
-        mensagem: ''
-      });
+      reset();
     } catch (error: any) {
       console.error('Erro ao enviar contato:', error);
       const errorMsg = error.response?.data?.message || 'Erro ao enviar mensagem. Tente novamente.';
@@ -551,36 +564,76 @@ export default function Home() {
                 viewport={{ once: true }}
               >
                 <h3 className="text-2xl font-bold text-white mb-4">Ou envie uma mensagem</h3>
-                <form className="space-y-4" onSubmit={handleContatoSubmit}>
+                <form className="space-y-4" onSubmit={handleSubmit(onSubmitContato)}>
                   <div>
                     <input 
                       type="text" 
                       placeholder="Seu nome" 
-                      value={contatoForm.nome}
-                      onChange={(e) => setContatoForm({ ...contatoForm, nome: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-primary focus:outline-none transition-colors"
+                      {...register('nome')}
+                      className={`w-full px-4 py-3 bg-dark-900/50 border-2 rounded-lg text-white placeholder-gray-500 focus:outline-none transition-all ${
+                        errors.nome 
+                          ? 'border-red-500 focus:border-red-400' 
+                          : formData.nome 
+                          ? 'border-green-500 focus:border-green-400' 
+                          : 'border-transparent focus:border-primary'
+                      }`}
                     />
+                    {errors.nome && <p className="text-red-400 text-sm mt-1">{errors.nome.message}</p>}
                   </div>
                   <div>
                     <input 
                       type="email" 
                       placeholder="Seu email" 
-                      value={contatoForm.email}
-                      onChange={(e) => setContatoForm({ ...contatoForm, email: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-primary focus:outline-none transition-colors"
+                      {...register('email')}
+                      className={`w-full px-4 py-3 bg-dark-900/50 border-2 rounded-lg text-white placeholder-gray-500 focus:outline-none transition-all ${
+                        errors.email 
+                          ? 'border-red-500 focus:border-red-400' 
+                          : formData.email 
+                          ? 'border-green-500 focus:border-green-400' 
+                          : 'border-transparent focus:border-primary'
+                      }`}
                     />
+                    {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>}
+                  </div>
+                  <div>
+                    <Controller
+                      name="telefone"
+                      control={control}
+                      render={({ field }) => (
+                        <InputMask mask="(99) 99999-9999" value={field.value} onChange={field.onChange}>
+                          {(inputProps: any) => (
+                            <input
+                              {...inputProps}
+                              type="tel"
+                              placeholder="Seu telefone (opcional)"
+                              className={`w-full px-4 py-3 bg-dark-900/50 border-2 rounded-lg text-white placeholder-gray-500 focus:outline-none transition-all ${
+                                errors.telefone 
+                                  ? 'border-red-500 focus:border-red-400' 
+                                  : formData.telefone 
+                                  ? 'border-green-500 focus:border-green-400' 
+                                  : 'border-transparent focus:border-primary'
+                              }`}
+                            />
+                          )}
+                        </InputMask>
+                      )}
+                    />
+                    {errors.telefone && <p className="text-red-400 text-sm mt-1">{errors.telefone.message}</p>}
                   </div>
                   <div>
                     <textarea 
                       placeholder="Conte-nos sobre seu projeto..." 
                       rows={4}
-                      value={contatoForm.mensagem}
-                      onChange={(e) => setContatoForm({ ...contatoForm, mensagem: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-primary focus:outline-none transition-colors resize-none"
+                      {...register('mensagem')}
+                      className={`w-full px-4 py-3 bg-dark-900/50 border-2 rounded-lg text-white placeholder-gray-500 focus:outline-none transition-all resize-none ${
+                        errors.mensagem 
+                          ? 'border-red-500 focus:border-red-400' 
+                          : formData.mensagem && formData.mensagem.length >= 10
+                          ? 'border-green-500 focus:border-green-400' 
+                          : 'border-transparent focus:border-primary'
+                      }`}
                     ></textarea>
+                    {errors.mensagem && <p className="text-red-400 text-sm mt-1">{errors.mensagem.message}</p>}
                   </div>
                   <motion.button
                     type="submit"

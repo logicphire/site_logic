@@ -5,6 +5,11 @@ export declare class ProjectsService {
     private prisma;
     constructor(prisma: PrismaService);
     create(createProjectDto: CreateProjectDto): Promise<{
+        id: number;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -12,17 +17,17 @@ export declare class ProjectsService {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         repositorio: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     }>;
     findAll(categoria?: string): Promise<{
+        id: number;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -30,17 +35,17 @@ export declare class ProjectsService {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         repositorio: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     }[]>;
     findOne(id: number): Promise<{
+        id: number;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -48,17 +53,17 @@ export declare class ProjectsService {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         repositorio: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     } | null>;
     findFeatured(): Promise<{
+        id: number;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -66,17 +71,17 @@ export declare class ProjectsService {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         repositorio: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     } | null>;
     update(id: number, updateProjectDto: UpdateProjectDto): Promise<{
+        id: number;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -84,17 +89,17 @@ export declare class ProjectsService {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         repositorio: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     }>;
     remove(id: number): Promise<{
+        id: number;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -102,17 +107,17 @@ export declare class ProjectsService {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         repositorio: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     }>;
     deactivate(id: number): Promise<{
+        id: number;
+        ativo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        link: string | null;
         titulo: string;
         descricao: string;
         categoria: string;
@@ -120,14 +125,9 @@ export declare class ProjectsService {
         plataforma: string;
         imagem: string | null;
         tecnologias: string[];
-        link: string | null;
         tipoLink: string | null;
         repositorio: string | null;
         destaque: boolean;
-        ativo: boolean;
         ordem: number;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
     }>;
 }

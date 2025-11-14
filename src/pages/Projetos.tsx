@@ -53,11 +53,94 @@ export default function Projetos() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-16 bg-dark-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-400">Carregando projetos...</p>
-        </div>
+      <div className="min-h-screen pt-16 bg-dark-900">
+        {/* Skeleton do Projeto em Destaque */}
+        <section className="relative min-h-screen flex items-center overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-dark-900 via-dark-800 to-dark-700 animate-pulse"></div>
+          
+          <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 w-full">
+            <div className="max-w-3xl">
+              {/* Skeleton Badge */}
+              <div className="flex items-center gap-3 mb-8">
+                <div className="h-9 w-48 bg-white/10 rounded-full animate-pulse"></div>
+                <div className="h-1 w-1 bg-white/20 rounded-full"></div>
+                <div className="h-6 w-24 bg-white/10 rounded animate-pulse"></div>
+              </div>
+
+              {/* Skeleton Title */}
+              <div className="space-y-4 mb-6">
+                <div className="h-20 w-full bg-white/10 rounded-2xl animate-pulse"></div>
+                <div className="h-20 w-3/4 bg-white/10 rounded-2xl animate-pulse"></div>
+              </div>
+
+              {/* Skeleton Description */}
+              <div className="space-y-3 mb-10">
+                <div className="h-6 w-full bg-white/5 rounded-lg animate-pulse"></div>
+                <div className="h-6 w-5/6 bg-white/5 rounded-lg animate-pulse"></div>
+                <div className="h-6 w-4/6 bg-white/5 rounded-lg animate-pulse"></div>
+              </div>
+
+              {/* Skeleton Tech Stack */}
+              <div className="flex flex-wrap gap-3 mb-10">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-10 w-24 bg-white/5 rounded-xl animate-pulse"></div>
+                ))}
+              </div>
+
+              {/* Skeleton Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="h-16 w-full sm:w-64 bg-primary/30 rounded-2xl animate-pulse"></div>
+                <div className="h-16 w-full sm:w-64 bg-white/10 rounded-2xl animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Skeleton Grid de Projetos */}
+        <section className="py-24 bg-gradient-to-b from-dark-900 to-dark-800">
+          <div className="max-w-7xl mx-auto px-6">
+            {/* Skeleton Header */}
+            <div className="text-center mb-16">
+              <div className="h-14 w-96 bg-white/10 rounded-2xl mx-auto mb-4 animate-pulse"></div>
+              <div className="h-6 w-64 bg-white/5 rounded-lg mx-auto animate-pulse"></div>
+            </div>
+
+            {/* Skeleton Filtros */}
+            <div className="flex flex-wrap justify-center gap-3 mb-16">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-12 w-32 bg-white/10 rounded-xl animate-pulse"></div>
+              ))}
+            </div>
+
+            {/* Skeleton Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div 
+                  key={i} 
+                  className="bg-dark-800/50 backdrop-blur-sm border border-white/5 rounded-2xl overflow-hidden"
+                >
+                  {/* Skeleton Image */}
+                  <div className="h-64 bg-gradient-to-br from-white/10 to-white/5 animate-pulse"></div>
+                  
+                  {/* Skeleton Content */}
+                  <div className="p-6">
+                    <div className="h-8 w-3/4 bg-white/10 rounded-lg mb-4 animate-pulse"></div>
+                    <div className="space-y-2 mb-4">
+                      <div className="h-4 w-full bg-white/5 rounded animate-pulse"></div>
+                      <div className="h-4 w-5/6 bg-white/5 rounded animate-pulse"></div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {[1, 2, 3].map((j) => (
+                        <div key={j} className="h-6 w-16 bg-white/5 rounded-lg animate-pulse"></div>
+                      ))}
+                    </div>
+                    <div className="h-12 w-full bg-primary/20 rounded-xl animate-pulse"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     );
   }

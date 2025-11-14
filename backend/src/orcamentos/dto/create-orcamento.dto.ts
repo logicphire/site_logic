@@ -26,6 +26,14 @@ export class CreateOrcamentoDto {
   prazo: string;
 
   @IsString()
+  @IsOptional()
+  diasPersonalizados?: string;
+
+  @IsString()
+  @IsOptional()
+  dataInicio?: string;
+
+  @IsString()
   @IsNotEmpty()
   orcamento: string;
 

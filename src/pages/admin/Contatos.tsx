@@ -9,7 +9,6 @@ interface Contato {
   nome: string;
   email: string;
   telefone?: string;
-  assunto: string;
   mensagem: string;
   lido: boolean;
   respondido: boolean;
@@ -93,8 +92,12 @@ export default function Contatos() {
   const handleOpenEmailModal = () => {
     if (!selectedContato) return;
     
+    // Gerar assunto baseado no contato
+    const dataContato = new Date(selectedContato.createdAt).toLocaleDateString('pt-BR');
+    const assuntoPadrao = `Re: Contato via Site - ${dataContato}`;
+    
     setEmailForm({
-      assunto: `Re: ${selectedContato.assunto}`,
+      assunto: assuntoPadrao,
       mensagem: `Olá ${selectedContato.nome},\n\nObrigado por entrar em contato!\n\n`,
     });
     setShowEmailModal(true);
@@ -355,7 +358,7 @@ export default function Contatos() {
                     </div>
                     {getStatusBadge(contato)}
                   </div>
-                  <p className="text-gray-400 text-sm mb-2 font-semibold">{contato.assunto}</p>
+                  <p className="text-gray-400 text-sm mb-2 line-clamp-1">{contato.mensagem}</p>
                   <p className="text-gray-500 text-xs">{formatDate(contato.createdAt)}</p>
                 </motion.div>
               ))
@@ -400,12 +403,6 @@ export default function Contatos() {
                       </span>
                     </div>
                   </div>
-                </div>
-
-                {/* Subject */}
-                <div className="bg-dark-900 border border-white/10 rounded-xl p-4 mb-6">
-                  <p className="text-gray-400 text-sm mb-1">Assunto</p>
-                  <p className="text-white font-semibold text-lg">{selectedContato.assunto}</p>
                 </div>
 
                 {/* Message */}
